@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // @reown/appkit-adapter-wagmi bundles @wagmi/connectors which imports
+  // porto/internal even when the Porto connector is never used.
+  // Stub it with an empty module so the build succeeds.
+  webpack: (config) => {
+    config.resolve.alias["porto/internal"] = false;
+    return config;
+  },
   headers: async () => [
     {
       source: "/(.*)",
