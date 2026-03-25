@@ -31,7 +31,6 @@ export const PROTO = {
 
 // Protocol → staking URL
 export const PROTO_URL = {
-  "BEX":       "https://bex.berachain.com/",
   "Infrared":  "https://infrared.finance/vaults",
   "Berps":     "https://berps.berachain.com/",
   "Bend":      "https://bend.berachain.com/",
@@ -66,13 +65,3 @@ export const TYPE_PILL = {
   "RWA":     { bg: "#1c2030", c: "#9198a8" },
   "Meme":    { bg: "#2a0d0d", c: "#f06060" },
 };
-
-export const MOCK = [
-  { id:1, vault:null, protocol:"BEX",       name:"HONEY / WBERA",    symbol:"BEX-LP",  apr:2847, bgtPerDay:0.89, tvl:18400000, totalSupply:null, type:"AMM",     active:true, stakingToken:null },
-  { id:2, vault:null, protocol:"BEX",       name:"BERA / USDC.e",    symbol:"BEX-LP",  apr:1203, bgtPerDay:0.51, tvl:11200000, totalSupply:null, type:"AMM",     active:true, stakingToken:null },
-  { id:3, vault:null, protocol:"BEX",       name:"WETH / HONEY",     symbol:"BEX-LP",  apr:724,  bgtPerDay:0.38, tvl:8600000,  totalSupply:null, type:"AMM",     active:true, stakingToken:null },
-  { id:4, vault:null, protocol:"Infrared",  name:"iBERA Vault",      symbol:"iBERA",   apr:431,  bgtPerDay:0.22, tvl:42000000, totalSupply:null, type:"LST",     active:true, stakingToken:null },
-  { id:5, vault:null, protocol:"Kodiak",    name:"BERA / HONEY",     symbol:"KDK-LP",  apr:298,  bgtPerDay:0.15, tvl:7100000,  totalSupply:null, type:"CL-AMM",  active:true, stakingToken:null },
-  { id:6, vault:null, protocol:"Berps",     name:"HONEY Vault",      symbol:"bHONEY",  apr:187,  bgtPerDay:0.09, tvl:24000000, totalSupply:null, type:"Perps",   active:true, stakingToken:null },
-  { id:7, vault:null, protocol:"Bend",      name:"Re7 HONEY Lend",   symbol:"aHONEY",  apr:42,   bgtPerDay:0.02, tvl:31000000, totalSupply:null, type:"Lending", active:true, stakingToken:null },
-];

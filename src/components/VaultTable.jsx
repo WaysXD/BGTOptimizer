@@ -101,7 +101,7 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
               <TH l="Protocol"  k="protocol" />
               <TH l="Vault"     k="name"     />
               <TH l="Type"      k="type"     />
-              <TH l="APR"       k="apr"      />
+              <TH l="APR / APY" k="apr"      />
               <TH l="TVL"       k="tvl"      />
               <TH l="BGT / day" k="bgtPerDay"/>
               <TH l="Action"    k={null}     />
@@ -125,20 +125,21 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
                     {v.symbol && (
                       <span style={{ marginLeft: 6, fontSize: 11, color: C.text2, fontFamily: C.mono }}>{v.symbol}</span>
                     )}
+                    <span style={{ marginLeft: 6, fontSize: 11, color: C.text2 }}>{v.sourceFreshness ? `Updated ${v.sourceFreshness}` : "Updated Unavailable"}</span>
                   </td>
                   <td style={tdS}>
                     <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, background: tp.bg, color: tp.c, fontWeight: 500 }}>{v.type}</span>
                   </td>
                   <td style={tdS}>
                     {v.apr != null
-                      ? <span style={{ fontFamily: C.mono, fontSize: 15, fontWeight: 500, color: aprColor(v.apr) }}>{fmt(v.apr, 0)}%</span>
-                      : <span style={{ color: C.text2 }}>—</span>}
+                      ? <span style={{ fontFamily: C.mono, fontSize: 15, fontWeight: 500, color: aprColor(v.apr) }}>{fmt(v.apr, 0)}% {v.aprLabel || "APR"}</span>
+                      : <span style={{ color: C.text2 }}>Unavailable</span>}
                   </td>
                   <td style={{ ...tdS, fontFamily: C.mono, color: C.text1 }}>
                     {v.tvl != null ? "$" + fmt(v.tvl) : <span style={{ color: C.text2 }}>—</span>}
                   </td>
                   <td style={{ ...tdS, fontFamily: C.mono, color: C.text1 }}>
-                    {v.bgtPerDay > 0 ? fmt(v.bgtPerDay, 3) : "—"}
+                    {v.bgtPerDay != null && v.bgtPerDay > 0 ? fmt(v.bgtPerDay, 3) : "Unavailable"}
                   </td>
                   <td style={tdS}>
                     <a href={stakeUrl(v)} target="_blank" rel="noopener noreferrer" className="lnk">
