@@ -23,5 +23,5 @@ export function aprPill(a) {
 }
 
 export function stakeUrl(vault) {
-  return PROTO_URL[vault.protocol] ?? "https://app.kodiak.finance/";
+  return vault.marketUrl ?? PROTO_URL[vault.protocol] ?? "https://app.kodiak.finance/";
 }

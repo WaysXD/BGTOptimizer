@@ -1,25 +1,27 @@
 import { useState, useEffect } from "react";
-import { C, MOCK } from "./lib/constants";
+import { C } from "./lib/constants";
 import { fmt, aprPill, stakeUrl } from "./lib/utils";
-import { loadVaults } from "./lib/vaults";
+import { loadMarkets } from "./lib/markets";
 import VaultTable from "./components/VaultTable";
 import WalletPanel from "./components/WalletPanel";
 import Calculator from "./components/Calculator";
 import "./App.css";
+const DEBUG = import.meta.env.VITE_DEBUG_MARKETS === "1";
 
 export default function App() {
-  const [vaults, setVaults]       = useState(MOCK);
+  const [vaults, setVaults]       = useState([]);
   const [beraPrice, setBeraPrice] = useState(null);
   const [source, setSource]       = useState("loading");
 
   useEffect(() => {
-    loadVaults()
+    loadMarkets()
       .then(({ vaults, beraPrice }) => {
+        if (DEBUG) console.info("[markets] app received vaults", { count: vaults.length, sample: vaults.slice(0, 3) });
         setVaults(vaults);
         setBeraPrice(beraPrice);
         setSource("live");
       })
-      .catch(() => setSource("mock"));
+      .catch(() => setSource("error"));
   }, []);
 
   // Stats (active vaults only)
@@ -55,7 +57,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.text2 }}>
             <span>Berachain mainnet · Proof-of-Liquidity vaults</span>
             {source === "live" && <span><span className="blink blink-green" style={{ marginRight: 5 }} />live</span>}
-            {source === "mock" && <span><span className="blink blink-honey" style={{ marginRight: 5 }} />demo data</span>}
+            {source === "error" && <span><span className="blink blink-honey" style={{ marginRight: 5 }} />data unavailable</span>}
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
@@ -121,7 +123,7 @@ export default function App() {
           APR = rewardRate × 31536000 × BGTPrice / TVL
         </code>
         {" · "}BGT valued at BERA price · LP TVL priced via DeFiLlama · Instantaneous APR, not historical
-        {source === "mock" && " · Demo data — RPC unreachable"}
+        {source === "error" && " · Live market APIs unreachable"}
       </div>
     </main>
   );

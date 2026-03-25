@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { C, TYPE_PILL } from "../lib/constants";
 import { fmt, aprColor, stakeUrl } from "../lib/utils";
+const DEBUG = import.meta.env.VITE_DEBUG_MARKETS === "1";
 
 export default function VaultTable({ initialVaults, beraPrice, source }) {
   const [sk, setSk]       = useState("apr");
@@ -16,16 +17,29 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
 
   const sorted = useMemo(() => {
     let v = [...initialVaults];
+    const rawCount = v.length;
     if (ao) v = v.filter((x) => x.active !== false);
+    const afterActive = v.length;
     if (ft !== "All") v = v.filter((x) => x.type === ft);
+    const afterType = v.length;
     if (search) {
       const q = search.toLowerCase();
       v = v.filter((x) => (x.name + x.symbol + x.protocol).toLowerCase().includes(q));
     }
+    const afterSearch = v.length;
     v.sort((a, b) => {
       const av = a[sk] ?? -Infinity, bv = b[sk] ?? -Infinity;
       return sd === "desc" ? bv - av : av - bv;
     });
+    if (DEBUG) {
+      console.info("[markets] table counts", {
+        rawFetched: rawCount,
+        afterActive,
+        afterType,
+        afterSearch,
+        finalRendered: v.length,
+      });
+    }
     return v;
   }, [initialVaults, sk, sd, ft, search, ao]);
 
@@ -101,7 +115,7 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
               <TH l="Protocol"  k="protocol" />
               <TH l="Vault"     k="name"     />
               <TH l="Type"      k="type"     />
-              <TH l="APR"       k="apr"      />
+              <TH l="APR / APY" k="apr"      />
               <TH l="TVL"       k="tvl"      />
               <TH l="BGT / day" k="bgtPerDay"/>
               <TH l="Action"    k={null}     />
@@ -125,20 +139,21 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
                     {v.symbol && (
                       <span style={{ marginLeft: 6, fontSize: 11, color: C.text2, fontFamily: C.mono }}>{v.symbol}</span>
                     )}
+                    <span style={{ marginLeft: 6, fontSize: 11, color: C.text2 }}>{v.sourceFreshness ? `Updated ${v.sourceFreshness}` : "Updated Unavailable"}</span>
                   </td>
                   <td style={tdS}>
                     <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, background: tp.bg, color: tp.c, fontWeight: 500 }}>{v.type}</span>
                   </td>
                   <td style={tdS}>
                     {v.apr != null
-                      ? <span style={{ fontFamily: C.mono, fontSize: 15, fontWeight: 500, color: aprColor(v.apr) }}>{fmt(v.apr, 0)}%</span>
-                      : <span style={{ color: C.text2 }}>—</span>}
+                      ? <span style={{ fontFamily: C.mono, fontSize: 15, fontWeight: 500, color: aprColor(v.apr) }}>{fmt(v.apr, 0)}% {v.aprLabel || "APR"}</span>
+                      : <span style={{ color: C.text2 }}>Unavailable</span>}
                   </td>
                   <td style={{ ...tdS, fontFamily: C.mono, color: C.text1 }}>
                     {v.tvl != null ? "$" + fmt(v.tvl) : <span style={{ color: C.text2 }}>—</span>}
                   </td>
                   <td style={{ ...tdS, fontFamily: C.mono, color: C.text1 }}>
-                    {v.bgtPerDay > 0 ? fmt(v.bgtPerDay, 3) : "—"}
+                    {v.bgtPerDay != null && v.bgtPerDay > 0 ? fmt(v.bgtPerDay, 3) : "Unavailable"}
                   </td>
                   <td style={tdS}>
                     <a href={stakeUrl(v)} target="_blank" rel="noopener noreferrer" className="lnk">
