@@ -1,5 +1,6 @@
 const MARKETS_API = "/api/markets";
 const LLAMA_YIELDS = "https://yields.llama.fi/pools";
+const DEBUG = import.meta.env.VITE_DEBUG_MARKETS === "1";
 
 function toType(category) {
   if (category === "vault") return "Vault";
@@ -48,8 +49,9 @@ export async function loadMarkets() {
     const response = await fetch(LLAMA_YIELDS);
     if (!response.ok) throw new Error(`DefiLlama HTTP ${response.status}`);
     const payload = await response.json();
+    const rawPools = payload?.data || [];
     const markets = (payload?.data || [])
-      .filter((pool) => String(pool.chain || "").toLowerCase() === "berachain")
+      .filter((pool) => String(pool.chain || "").toLowerCase().includes("berachain"))
       .filter((pool) => {
         const p = String(pool.project || "").toLowerCase();
         return p.includes("beradrome") || p.includes("arbera") || p.includes("kodiak");
@@ -68,6 +70,13 @@ export async function loadMarkets() {
         sourceUpdatedAt: typeof pool.timestamp === "number" ? new Date(pool.timestamp * 1000).toISOString() : null,
         sourceType: "defillama",
       }));
+    if (DEBUG) {
+      console.info("[markets] client fallback counts", {
+        rawPools: rawPools.length,
+        chainMatched: rawPools.filter((pool) => String(pool.chain || "").toLowerCase().includes("berachain")).length,
+        protocolMatched: markets.length,
+      });
+    }
     return { payload: { warnings: ["Using client fallback to DefiLlama"], cache: "bypass" }, markets };
   }
 
@@ -108,6 +117,16 @@ export async function loadMarkets() {
       sourceType: market.sourceType || "other",
     };
   });
+
+  if (DEBUG) {
+    console.info("[markets] normalization counts", {
+      rawFetched: markets.length,
+      normalized: normalized.length,
+      active: normalized.filter((v) => v.active !== false).length,
+      priced: normalized.filter((v) => v.tvl != null && Number.isFinite(v.tvl)).length,
+      aprReady: normalized.filter((v) => v.apr != null && Number.isFinite(v.apr)).length,
+    });
+  }
 
   return {
     vaults: normalized,

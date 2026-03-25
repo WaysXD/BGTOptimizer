@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { C, TYPE_PILL } from "../lib/constants";
 import { fmt, aprColor, stakeUrl } from "../lib/utils";
+const DEBUG = import.meta.env.VITE_DEBUG_MARKETS === "1";
 
 export default function VaultTable({ initialVaults, beraPrice, source }) {
   const [sk, setSk]       = useState("apr");
@@ -16,16 +17,29 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
 
   const sorted = useMemo(() => {
     let v = [...initialVaults];
+    const rawCount = v.length;
     if (ao) v = v.filter((x) => x.active !== false);
+    const afterActive = v.length;
     if (ft !== "All") v = v.filter((x) => x.type === ft);
+    const afterType = v.length;
     if (search) {
       const q = search.toLowerCase();
       v = v.filter((x) => (x.name + x.symbol + x.protocol).toLowerCase().includes(q));
     }
+    const afterSearch = v.length;
     v.sort((a, b) => {
       const av = a[sk] ?? -Infinity, bv = b[sk] ?? -Infinity;
       return sd === "desc" ? bv - av : av - bv;
     });
+    if (DEBUG) {
+      console.info("[markets] table counts", {
+        rawFetched: rawCount,
+        afterActive,
+        afterType,
+        afterSearch,
+        finalRendered: v.length,
+      });
+    }
     return v;
   }, [initialVaults, sk, sd, ft, search, ao]);
 

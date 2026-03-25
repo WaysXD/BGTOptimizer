@@ -6,6 +6,7 @@ import VaultTable from "./components/VaultTable";
 import WalletPanel from "./components/WalletPanel";
 import Calculator from "./components/Calculator";
 import "./App.css";
+const DEBUG = import.meta.env.VITE_DEBUG_MARKETS === "1";
 
 export default function App() {
   const [vaults, setVaults]       = useState([]);
@@ -15,6 +16,7 @@ export default function App() {
   useEffect(() => {
     loadMarkets()
       .then(({ vaults, beraPrice }) => {
+        if (DEBUG) console.info("[markets] app received vaults", { count: vaults.length, sample: vaults.slice(0, 3) });
         setVaults(vaults);
         setBeraPrice(beraPrice);
         setSource("live");

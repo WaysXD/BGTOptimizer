@@ -13,6 +13,7 @@ const OFFICIAL_ENDPOINTS = {
   Kodiak: process.env.KODIAK_MARKETS_API_URL || "",
 };
 const DEBUG = process.env.DEBUG_MARKETS === "1";
+const TARGET_CHAIN_KEYWORD = "berachain";
 
 let cache = {
   ts: 0,
@@ -148,6 +149,11 @@ function isTargetProtocol(rawProject = "") {
   return project.includes("beradrome") || project.includes("arbera") || project.includes("kodiak");
 }
 
+function isBerachain(rawChain = "") {
+  const chain = String(rawChain || "").toLowerCase();
+  return chain.includes(TARGET_CHAIN_KEYWORD);
+}
+
 function dedupeMarkets(markets) {
   const byKey = new Map();
   for (const market of markets) {
@@ -205,7 +211,7 @@ module.exports = async function handler(req, res) {
     const llama = await fetchJsonWithRetry("https://yields.llama.fi/pools", 1);
     if (DEBUG) console.info("[markets] defillama payload", { total: llama?.data?.length || 0 });
     llamaPools = (llama?.data || [])
-      .filter((pool) => String(pool.chain || "").toLowerCase() === BERACHAIN_CHAIN_KEY)
+      .filter((pool) => isBerachain(pool.chain))
       .filter((pool) => isTargetProtocol(pool.project))
       .map(mapLlamaPoolToMarket)
       .filter((m) => m.status !== "inactive");
