@@ -1,9 +1,8 @@
-"use client";
 import { useAppKit, useAppKitState } from "@reown/appkit/react";
 import { useAccount, useDisconnect, useBalance, useReadContracts } from "wagmi";
 import { formatUnits } from "viem";
-import { C } from "@/lib/constants";
-import { fmt } from "@/lib/utils";
+import { C } from "../lib/constants";
+import { fmt } from "../lib/utils";
 
 const BGT_ADDRESS = "0x46eFC86F0D7455F135CC9df501673739d513E982";
 
@@ -19,11 +18,20 @@ const VAULT_ABI = [
     inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
 ];
 
+function Stat({ label, value, color }) {
+  return (
+    <div style={{ textAlign: "right" }}>
+      <div style={{ fontSize: 10, color: C.text2, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+      <div style={{ fontFamily: C.mono, fontSize: 14, color: color ?? C.text0 }}>{value}</div>
+    </div>
+  );
+}
+
 export default function WalletPanel({ vaults, beraPrice }) {
-  const { open }                    = useAppKit();
-  const { loading: modalLoading }   = useAppKitState();
+  const { open }                        = useAppKit();
+  const { loading: modalLoading }       = useAppKitState();
   const { address, isConnected, chain } = useAccount();
-  const { disconnect }              = useDisconnect();
+  const { disconnect }                  = useDisconnect();
 
   const { data: beraBalance } = useBalance({
     address,
@@ -40,7 +48,6 @@ export default function WalletPanel({ vaults, beraPrice }) {
     query: { enabled: !!address },
   });
 
-  // Batch-read staked balance + pending BGT for all live vault contracts
   const liveVaults = vaults.filter((v) => !!v.vault);
   const { data: positionData, isLoading: posLoading } = useReadContracts({
     contracts: liveVaults.flatMap((v) => [
@@ -66,7 +73,6 @@ export default function WalletPanel({ vaults, beraPrice }) {
   const totalStakedUsd  = positions.reduce((s, p) => s + (p.stakedUsd ?? 0), 0);
   const bgtBalance      = bgtData?.[0]?.result ? Number(formatUnits(bgtData[0].result, 18)) : null;
 
-  // ── Not connected ──────────────────────────────────────────────────
   if (!isConnected) {
     return (
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1.25rem" }}>
@@ -77,7 +83,8 @@ export default function WalletPanel({ vaults, beraPrice }) {
           style={{ display: "flex", alignItems: "center", gap: 8 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+            <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/>
+            <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
           </svg>
           {modalLoading ? "Connecting…" : "Connect Wallet"}
         </button>
@@ -85,15 +92,11 @@ export default function WalletPanel({ vaults, beraPrice }) {
     );
   }
 
-  // ── Connected ──────────────────────────────────────────────────────
   return (
     <div style={{ background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.25rem 1.4rem", marginBottom: "1.5rem" }}>
-
-      {/* Header row */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: positions.length > 0 ? "1.1rem" : 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span className="blink blink-green" />
-          {/* Clicking address opens Reown account modal */}
           <button
             onClick={() => open({ view: "Account" })}
             style={{ fontFamily: C.mono, fontSize: 13, color: C.text0, background: "none", border: "none", cursor: "pointer", padding: 0 }}
@@ -109,30 +112,22 @@ export default function WalletPanel({ vaults, beraPrice }) {
             </button>
           )}
         </div>
-
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
           <Stat label="BERA"       value={beraBalance ? Number(beraBalance.formatted).toFixed(3) : "—"} />
           <Stat label="BGT bal"    value={bgtBalance != null ? fmt(bgtBalance, 4) : "—"} color={C.honey} />
           <Stat label="BGT earned" value={fmt(totalPendingBgt, 4)} color={C.green} />
           {totalStakedUsd > 0 && <Stat label="Staked" value={"$" + fmt(totalStakedUsd)} />}
-          <button className="wallet-btn sm" onClick={() => open({ view: "Account" })}>
-            Account
-          </button>
+          <button className="wallet-btn sm" onClick={() => open({ view: "Account" })}>Account</button>
         </div>
       </div>
 
-      {/* Positions */}
-      {posLoading && (
-        <div style={{ fontSize: 13, color: C.text2 }}>Loading positions…</div>
-      )}
+      {posLoading && <div style={{ fontSize: 13, color: C.text2 }}>Loading positions…</div>}
       {!posLoading && positions.length === 0 && (
         <div style={{ fontSize: 13, color: C.text2 }}>No active positions in tracked vaults.</div>
       )}
       {positions.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, color: C.text2, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
-            Your positions
-          </div>
+          <div style={{ fontSize: 10, color: C.text2, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>Your positions</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {positions.map((p) => (
               <div key={p.vault} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr auto", gap: 16, alignItems: "center", background: C.bg2, borderRadius: 10, padding: "10px 14px" }}>
@@ -156,23 +151,12 @@ export default function WalletPanel({ vaults, beraPrice }) {
                     {p.apr != null ? fmt(p.apr, 0) + "%" : "—"}
                   </div>
                 </div>
-                <a href="https://app.kodiak.finance/" target="_blank" rel="noopener noreferrer" className="lnk">
-                  Manage →
-                </a>
+                <a href="https://app.kodiak.finance/" target="_blank" rel="noopener noreferrer" className="lnk">Manage →</a>
               </div>
             ))}
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Stat({ label, value, color }) {
-  return (
-    <div style={{ textAlign: "right" }}>
-      <div style={{ fontSize: 10, color: C.text2, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ fontFamily: C.mono, fontSize: 14, color: color ?? C.text0 }}>{value}</div>
     </div>
   );
 }

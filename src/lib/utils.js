@@ -1,4 +1,4 @@
-import { C, PROTO_URL } from "./constants.js";
+import { C, PROTO_URL } from "./constants";
 
 export function fmt(n, d = 2) {
   if (n == null || isNaN(n)) return "—";
@@ -23,5 +23,5 @@ export function aprPill(a) {
 }
 
 export function stakeUrl(vault) {
-  return PROTO_URL[vault.protocol] ?? `https://app.kodiak.finance/`;
+  return PROTO_URL[vault.protocol] ?? "https://app.kodiak.finance/";
 }

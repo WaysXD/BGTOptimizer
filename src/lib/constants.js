@@ -19,7 +19,7 @@ export const SEL = {
 // Stablecoins — price = $1
 export const STABLES = new Set([
   HONEY.toLowerCase(),
-  "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // bridged USDC
+  "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 ]);
 
 // Protocol keyword → display name
@@ -29,7 +29,7 @@ export const PROTO = {
   beradrome: "Beradrome", nav: "NAV", yeet: "Yeet", re7: "Re7",
 };
 
-// Protocol → staking URL (Berahub replaced by protocol-native sites)
+// Protocol → staking URL
 export const PROTO_URL = {
   "BEX":       "https://bex.berachain.com/",
   "Infrared":  "https://infrared.finance/vaults",
@@ -51,8 +51,8 @@ export const C = {
   red: "#f06060",   redDim: "#2a0d0d",
   blue: "#5aade8",  blueDim: "#0c1a2a",
   purple: "#b07cf8", purpleDim: "#1a0d30",
-  mono: "var(--font-mono),'Fira Code','Courier New',monospace",
-  sans: "var(--font-inter),system-ui,sans-serif",
+  mono: "'JetBrains Mono','Fira Code','Courier New',monospace",
+  sans: "Inter,system-ui,sans-serif",
 };
 
 export const TYPE_PILL = {

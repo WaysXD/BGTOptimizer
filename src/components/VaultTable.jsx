@@ -1,7 +1,6 @@
-"use client";
 import { useState, useMemo } from "react";
-import { C, TYPE_PILL } from "@/lib/constants";
-import { fmt, aprColor, stakeUrl } from "@/lib/utils";
+import { C, TYPE_PILL } from "../lib/constants";
+import { fmt, aprColor, stakeUrl } from "../lib/utils";
 
 export default function VaultTable({ initialVaults, beraPrice, source }) {
   const [sk, setSk]       = useState("apr");
@@ -65,7 +64,7 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
 
   return (
     <div style={{ marginBottom: "1.75rem" }}>
-      {/* ── Filter bar ──────────────────────────────────────────── */}
+      {/* Filter bar */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
         <input
           type="text"
@@ -85,7 +84,7 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
         </label>
       </div>
 
-      {/* ── Table ───────────────────────────────────────────────── */}
+      {/* Table */}
       <div style={{ background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <colgroup>
