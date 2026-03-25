@@ -50,16 +50,16 @@ export default function App() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.75rem" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
-            <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>🐻 BGT Yield Optimizer</span>
+            <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>🌅 Rise Yield Optimizer</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.text2 }}>
-            <span>Berachain mainnet · Proof-of-Liquidity vaults</span>
+            <span>RiseChain mainnet · reward vaults</span>
             {source === "live" && <span><span className="blink blink-green" style={{ marginRight: 5 }} />live</span>}
             {source === "mock" && <span><span className="blink blink-honey" style={{ marginRight: 5 }} />demo data</span>}
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 10, color: C.text2, marginBottom: 2, letterSpacing: "0.06em", textTransform: "uppercase" }}>BERA / USD</div>
+          <div style={{ fontSize: 10, color: C.text2, marginBottom: 2, letterSpacing: "0.06em", textTransform: "uppercase" }}>RISE / USD</div>
           <div style={{ fontFamily: C.mono, fontSize: 28, fontWeight: 500, color: C.honey, lineHeight: 1, textShadow: `0 0 20px ${C.honeyGlow}` }}>
             {beraPrice ? `$${beraPrice.toFixed(2)}` : "—"}
           </div>
@@ -92,7 +92,7 @@ export default function App() {
                   <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 2 }}>{v.protocol}</div>
                   <div style={{ fontSize: 12, color: C.text2, marginBottom: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.name}</div>
                   <div style={{ fontFamily: C.mono, fontSize: 26, fontWeight: 500, color: p.c, lineHeight: 1, marginBottom: 2 }}>{fmt(v.apr, 0)}%</div>
-                  <div style={{ fontSize: 11, color: C.text2, marginBottom: 10 }}>BGT APR</div>
+                  <div style={{ fontSize: 11, color: C.text2, marginBottom: 10 }}>RISE APR</div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     {v.tvl != null
                       ? <span style={{ fontSize: 12, color: C.text1 }}>TVL: <span style={{ fontFamily: C.mono }}>${fmt(v.tvl)}</span></span>
@@ -118,9 +118,9 @@ export default function App() {
       {/* ── Footer ──────────────────────────────────────────────────── */}
       <div style={{ fontSize: 11, color: C.text2, lineHeight: 1.7 }}>
         <code style={{ fontFamily: C.mono, background: C.bg2, padding: "1px 6px", borderRadius: 4, fontSize: 10 }}>
-          APR = rewardRate × 31536000 × BGTPrice / TVL
+          APR = rewardRate × 31536000 × RewardPrice / TVL
         </code>
-        {" · "}BGT valued at BERA price · LP TVL priced via DeFiLlama · Instantaneous APR, not historical
+        {" · "}Rewards valued at RISE price · LP TVL priced via DeFiLlama · Instantaneous APR, not historical
         {source === "mock" && " · Demo data — RPC unreachable"}
       </div>
     </main>

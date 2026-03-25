@@ -1,10 +1,8 @@
 import { useAppKit, useAppKitState } from "@reown/appkit/react";
-import { useAccount, useDisconnect, useBalance, useReadContracts } from "wagmi";
+import { useAccount, useBalance, useReadContracts } from "wagmi";
 import { formatUnits } from "viem";
-import { C } from "../lib/constants";
+import { C, CHAIN_ID, NATIVE_SYMBOL, REWARD_SYMBOL, REWARD_TOKEN_ADDR } from "../lib/constants";
 import { fmt } from "../lib/utils";
-
-const BGT_ADDRESS = "0x46eFC86F0D7455F135CC9df501673739d513E982";
 
 const ERC20_ABI = [
   { name: "balanceOf", type: "function", stateMutability: "view",
@@ -31,21 +29,22 @@ export default function WalletPanel({ vaults, beraPrice }) {
   const { open }                        = useAppKit();
   const { loading: modalLoading }       = useAppKitState();
   const { address, isConnected, chain } = useAccount();
-  const { disconnect }                  = useDisconnect();
 
-  const { data: beraBalance } = useBalance({
+  const { data: nativeBalance } = useBalance({
     address,
     query: { enabled: !!address },
   });
 
+  const canReadRewardToken = REWARD_TOKEN_ADDR !== "0x0000000000000000000000000000000000000000";
+
   const { data: bgtData } = useReadContracts({
-    contracts: [{
-      address: BGT_ADDRESS,
+    contracts: canReadRewardToken ? [{
+      address: REWARD_TOKEN_ADDR,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [address],
-    }],
-    query: { enabled: !!address },
+    }] : [],
+    query: { enabled: !!address && canReadRewardToken },
   });
 
   const liveVaults = vaults.filter((v) => !!v.vault);
@@ -71,7 +70,7 @@ export default function WalletPanel({ vaults, beraPrice }) {
 
   const totalPendingBgt = positions.reduce((s, p) => s + p.pendingBgt, 0);
   const totalStakedUsd  = positions.reduce((s, p) => s + (p.stakedUsd ?? 0), 0);
-  const bgtBalance      = bgtData?.[0]?.result ? Number(formatUnits(bgtData[0].result, 18)) : null;
+  const rewardBalance   = bgtData?.[0]?.result ? Number(formatUnits(bgtData[0].result, 18)) : null;
 
   if (!isConnected) {
     return (
@@ -103,7 +102,7 @@ export default function WalletPanel({ vaults, beraPrice }) {
           >
             {address?.slice(0, 6)}…{address?.slice(-4)}
           </button>
-          {chain?.id !== 80094 && (
+          {chain?.id !== CHAIN_ID && (
             <button
               onClick={() => open({ view: "Networks" })}
               style={{ fontSize: 11, background: C.redDim, color: C.red, padding: "2px 8px", borderRadius: 20, border: "none", cursor: "pointer" }}
@@ -113,9 +112,9 @@ export default function WalletPanel({ vaults, beraPrice }) {
           )}
         </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-          <Stat label="BERA"       value={beraBalance ? Number(beraBalance.formatted).toFixed(3) : "—"} />
-          <Stat label="BGT bal"    value={bgtBalance != null ? fmt(bgtBalance, 4) : "—"} color={C.honey} />
-          <Stat label="BGT earned" value={fmt(totalPendingBgt, 4)} color={C.green} />
+          <Stat label={NATIVE_SYMBOL}            value={nativeBalance ? Number(nativeBalance.formatted).toFixed(3) : "—"} />
+          <Stat label={`${REWARD_SYMBOL} bal`}   value={rewardBalance != null ? fmt(rewardBalance, 4) : "—"} color={C.honey} />
+          <Stat label={`${REWARD_SYMBOL} earned`} value={fmt(totalPendingBgt, 4)} color={C.green} />
           {totalStakedUsd > 0 && <Stat label="Staked" value={"$" + fmt(totalStakedUsd)} />}
           <button className="wallet-btn sm" onClick={() => open({ view: "Account" })}>Account</button>
         </div>
@@ -141,7 +140,7 @@ export default function WalletPanel({ vaults, beraPrice }) {
                   {p.stakedUsd != null && <div style={{ fontSize: 11, color: C.text2 }}>${fmt(p.stakedUsd, 0)}</div>}
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: C.text2, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 }}>Pending BGT</div>
+                  <div style={{ fontSize: 10, color: C.text2, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 }}>Pending {REWARD_SYMBOL}</div>
                   <div style={{ fontFamily: C.mono, fontSize: 13, color: C.green }}>{fmt(p.pendingBgt, 4)}</div>
                   {beraPrice && p.pendingBgt > 0 && <div style={{ fontSize: 11, color: C.text2 }}>${fmt(p.pendingBgt * beraPrice, 2)}</div>}
                 </div>
@@ -151,7 +150,7 @@ export default function WalletPanel({ vaults, beraPrice }) {
                     {p.apr != null ? fmt(p.apr, 0) + "%" : "—"}
                   </div>
                 </div>
-                <a href="https://app.kodiak.finance/" target="_blank" rel="noopener noreferrer" className="lnk">Manage →</a>
+                <a href="https://app.risechain.com/" target="_blank" rel="noopener noreferrer" className="lnk">Manage →</a>
               </div>
             ))}
           </div>

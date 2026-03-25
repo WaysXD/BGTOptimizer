@@ -1,9 +1,22 @@
-export const FACTORY = "0x94Ad6Ac84f6C6FbA8b8CCbD71d9f4f101def52a8";
-export const WBERA   = "0x6969696969696969696969696969696969696969";
-export const HONEY   = "0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce";
-export const BGT     = "0x46eFC86F0D7455F135CC9df501673739d513E982";
-export const RPC     = "https://rpc.berachain.com";
-export const SPY     = 31_536_000; // seconds per year
+const env = import.meta.env;
+
+export const CHAIN_NAME        = env.VITE_CHAIN_NAME ?? "RiseChain";
+export const CHAIN_ID          = Number(env.VITE_CHAIN_ID ?? 11155931);
+export const CHAIN_CAIP        = env.VITE_CHAIN_CAIP ?? `eip155:${CHAIN_ID}`;
+export const RPC               = env.VITE_RPC_URL ?? "https://rpc.risechain.com";
+export const EXPLORER_NAME     = env.VITE_EXPLORER_NAME ?? "RiseScan";
+export const EXPLORER_URL      = env.VITE_EXPLORER_URL ?? "https://scan.risechain.com";
+export const NATIVE_SYMBOL     = env.VITE_NATIVE_SYMBOL ?? "RISE";
+export const REWARD_SYMBOL     = env.VITE_REWARD_SYMBOL ?? "RISE";
+export const APP_NAME          = env.VITE_APP_NAME ?? "Rise Yield Optimizer";
+export const APP_URL           = env.VITE_APP_URL ?? "https://riseoptimizer.vercel.app";
+export const REWARD_TOKEN_ADDR = env.VITE_REWARD_TOKEN ?? "0x0000000000000000000000000000000000000000";
+export const WRAPPED_NATIVE    = env.VITE_WRAPPED_NATIVE ?? "0x0000000000000000000000000000000000000000";
+export const FACTORY           = env.VITE_FACTORY ?? "0x0000000000000000000000000000000000000000";
+export const PRICE_NAMESPACE   = env.VITE_PRICE_NAMESPACE ?? "risechain";
+export const PRICE_KEY         = env.VITE_PRICE_KEY ?? "coingecko:ethereum";
+
+export const SPY = 31_536_000; // seconds per year
 
 export const SEL = {
   allVaultsLength: "0x36deba41",
@@ -18,28 +31,25 @@ export const SEL = {
 
 // Stablecoins — price = $1
 export const STABLES = new Set([
-  HONEY.toLowerCase(),
   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "0xdac17f958d2ee523a2206206994597c13d831ec7",
 ]);
 
 // Protocol keyword → display name
 export const PROTO = {
-  honey: "Bend", bex: "BEX", berps: "Berps", ibera: "Infrared",
-  ibgt: "Infrared", smilee: "Smilee", kodiak: "Kodiak",
-  beradrome: "Beradrome", nav: "NAV", yeet: "Yeet", re7: "Re7",
+  rise: "Rise", ambient: "Ambient", curve: "Curve", aave: "Aave",
+  uni: "Uniswap", pendle: "Pendle", vault: "Vault",
 };
 
 // Protocol → staking URL
 export const PROTO_URL = {
-  "BEX":       "https://bex.berachain.com/",
-  "Infrared":  "https://infrared.finance/vaults",
-  "Berps":     "https://berps.berachain.com/",
-  "Bend":      "https://bend.berachain.com/",
-  "Kodiak":    "https://app.kodiak.finance/",
-  "Beradrome": "https://www.beradrome.com/",
-  "Smilee":    "https://smilee.finance/",
-  "NAV":       "https://app.nav.xyz/",
-  "Yeet":      "https://app.yeet.xyz/",
+  "Rise":    "https://app.risechain.com/",
+  "Ambient": "https://app.ambient.finance/",
+  "Curve":   "https://curve.fi/",
+  "Aave":    "https://app.aave.com/",
+  "Uniswap": "https://app.uniswap.org/",
+  "Pendle":  "https://app.pendle.finance/",
+  "Vault":   "https://app.risechain.com/",
 };
 
 export const C = {
@@ -68,11 +78,9 @@ export const TYPE_PILL = {
 };
 
 export const MOCK = [
-  { id:1, vault:null, protocol:"BEX",       name:"HONEY / WBERA",    symbol:"BEX-LP",  apr:2847, bgtPerDay:0.89, tvl:18400000, totalSupply:null, type:"AMM",     active:true, stakingToken:null },
-  { id:2, vault:null, protocol:"BEX",       name:"BERA / USDC.e",    symbol:"BEX-LP",  apr:1203, bgtPerDay:0.51, tvl:11200000, totalSupply:null, type:"AMM",     active:true, stakingToken:null },
-  { id:3, vault:null, protocol:"BEX",       name:"WETH / HONEY",     symbol:"BEX-LP",  apr:724,  bgtPerDay:0.38, tvl:8600000,  totalSupply:null, type:"AMM",     active:true, stakingToken:null },
-  { id:4, vault:null, protocol:"Infrared",  name:"iBERA Vault",      symbol:"iBERA",   apr:431,  bgtPerDay:0.22, tvl:42000000, totalSupply:null, type:"LST",     active:true, stakingToken:null },
-  { id:5, vault:null, protocol:"Kodiak",    name:"BERA / HONEY",     symbol:"KDK-LP",  apr:298,  bgtPerDay:0.15, tvl:7100000,  totalSupply:null, type:"CL-AMM",  active:true, stakingToken:null },
-  { id:6, vault:null, protocol:"Berps",     name:"HONEY Vault",      symbol:"bHONEY",  apr:187,  bgtPerDay:0.09, tvl:24000000, totalSupply:null, type:"Perps",   active:true, stakingToken:null },
-  { id:7, vault:null, protocol:"Bend",      name:"Re7 HONEY Lend",   symbol:"aHONEY",  apr:42,   bgtPerDay:0.02, tvl:31000000, totalSupply:null, type:"Lending", active:true, stakingToken:null },
+  { id:1, vault:null, protocol:"Rise",    name:"RISE / USDC",    symbol:"RS-LP", apr:312, bgtPerDay:1.14, tvl:8600000, totalSupply:null, type:"AMM",     active:true, stakingToken:null },
+  { id:2, vault:null, protocol:"Ambient", name:"RISE / WETH",    symbol:"AMB",   apr:204, bgtPerDay:0.88, tvl:5300000, totalSupply:null, type:"CL-AMM",  active:true, stakingToken:null },
+  { id:3, vault:null, protocol:"Pendle",  name:"stRISE Vault",   symbol:"stRISE",apr:141, bgtPerDay:0.47, tvl:11200000,totalSupply:null, type:"LST",     active:true, stakingToken:null },
+  { id:4, vault:null, protocol:"Curve",   name:"USDC / USDT",    symbol:"crvLP", apr:56,  bgtPerDay:0.19, tvl:17400000,totalSupply:null, type:"AMM",     active:true, stakingToken:null },
+  { id:5, vault:null, protocol:"Aave",    name:"USDC Lending",   symbol:"aUSDC", apr:18,  bgtPerDay:0.05, tvl:22900000,totalSupply:null, type:"Lending", active:true, stakingToken:null },
 ];

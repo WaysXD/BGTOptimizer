@@ -1,10 +1,12 @@
 // Client-side DeFiLlama price fetching.
+import { PRICE_KEY, PRICE_NAMESPACE } from "./constants";
+
 const LLAMA_COINS = "https://coins.llama.fi/prices/current";
 
 export async function fetchPrices(addresses) {
   if (!addresses.length) return {};
   try {
-    const coins = addresses.map((a) => `berachain:${a.toLowerCase()}`).join(",");
+    const coins = addresses.map((a) => `${PRICE_NAMESPACE}:${a.toLowerCase()}`).join(",");
     const res   = await fetch(`${LLAMA_COINS}/${coins}`);
     if (!res.ok) return {};
     const data  = await res.json();
@@ -19,12 +21,12 @@ export async function fetchPrices(addresses) {
   }
 }
 
-export async function fetchBeraPrice() {
+export async function fetchNativePrice() {
   try {
-    const res  = await fetch(`${LLAMA_COINS}/coingecko:berachain-bera`);
+    const res  = await fetch(`${LLAMA_COINS}/${PRICE_KEY}`);
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.coins?.["coingecko:berachain-bera"]?.price ?? null;
+    return data?.coins?.[PRICE_KEY]?.price ?? null;
   } catch {
     return null;
   }

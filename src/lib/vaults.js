@@ -1,8 +1,8 @@
 // Client-side vault loading — batched RPC via proxy + DeFiLlama LP pricing.
 import { batchRpc } from "./rpc";
-import { fetchPrices, fetchBeraPrice } from "./prices";
+import { fetchPrices, fetchNativePrice } from "./prices";
 import { enc, dU, dAddr, dStr } from "./decode";
-import { FACTORY, WBERA, SPY, SEL, STABLES, PROTO } from "./constants";
+import { FACTORY, WRAPPED_NATIVE, SPY, SEL, STABLES, PROTO } from "./constants";
 
 function guessProt(name = "", symbol = "") {
   const q = (name + symbol).toLowerCase();
@@ -82,11 +82,11 @@ export async function loadVaults() {
   );
 
   // 5. Price all staking tokens via DeFiLlama
-  const [prices, beraPrice] = await Promise.all([
+  const [prices, nativePrice] = await Promise.all([
     fetchPrices(uniqueTokens),
-    fetchBeraPrice(),
+    fetchNativePrice(),
   ]);
-  const bp = beraPrice ?? 4.5;
+  const bp = nativePrice ?? 1.0;
 
   // 6. Compute APR + TVL
   const vaults = rawVaults.map((v, idx) => {
@@ -97,7 +97,7 @@ export async function loadVaults() {
     let tokenPrice = prices[v.stakingToken?.toLowerCase()];
     if (tokenPrice == null) {
       if (STABLES.has(v.stakingToken?.toLowerCase()))                       tokenPrice = 1.0;
-      else if (v.stakingToken?.toLowerCase() === WBERA.toLowerCase()) tokenPrice = bp;
+      else if (v.stakingToken?.toLowerCase() === WRAPPED_NATIVE.toLowerCase()) tokenPrice = bp;
     }
 
     const tvl       = tokenPrice != null ? v.totalSupply * tokenPrice : null;
