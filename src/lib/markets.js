@@ -1,4 +1,5 @@
 const MARKETS_API = "/api/markets";
+const LLAMA_YIELDS = "https://yields.llama.fi/pools";
 
 function toType(category) {
   if (category === "vault") return "Vault";
@@ -35,10 +36,53 @@ function freshnessLabel(sourceUpdatedAt) {
 }
 
 export async function loadMarkets() {
-  const response = await fetch(MARKETS_API);
-  if (!response.ok) throw new Error(`Markets HTTP ${response.status}`);
-  const payload = await response.json();
-  const markets = Array.isArray(payload?.markets) ? payload.markets : [];
+  async function fetchFromApi() {
+    const response = await fetch(MARKETS_API);
+    if (!response.ok) throw new Error(`Markets HTTP ${response.status}`);
+    const payload = await response.json();
+    const markets = Array.isArray(payload?.markets) ? payload.markets : [];
+    return { payload, markets };
+  }
+
+  async function fetchFromLlamaClientFallback() {
+    const response = await fetch(LLAMA_YIELDS);
+    if (!response.ok) throw new Error(`DefiLlama HTTP ${response.status}`);
+    const payload = await response.json();
+    const markets = (payload?.data || [])
+      .filter((pool) => String(pool.chain || "").toLowerCase() === "berachain")
+      .filter((pool) => {
+        const p = String(pool.project || "").toLowerCase();
+        return p.includes("beradrome") || p.includes("arbera") || p.includes("kodiak");
+      })
+      .map((pool) => ({
+        id: `${pool.project}:${pool.pool}`,
+        protocol: String(pool.project || "unknown"),
+        marketName: pool.symbol || pool.pool || "Unavailable",
+        category: "lp",
+        aprTotal: Number.isFinite(Number(pool.apr)) ? Number(pool.apr) : null,
+        apyTotal: Number.isFinite(Number(pool.apy)) ? Number(pool.apy) : null,
+        tvlUsd: Number.isFinite(Number(pool.tvlUsd)) ? Number(pool.tvlUsd) : null,
+        marketUrl: null,
+        status: "active",
+        depositTokens: Array.isArray(pool.underlyingTokens) ? pool.underlyingTokens : [],
+        sourceUpdatedAt: typeof pool.timestamp === "number" ? new Date(pool.timestamp * 1000).toISOString() : null,
+        sourceType: "defillama",
+      }));
+    return { payload: { warnings: ["Using client fallback to DefiLlama"], cache: "bypass" }, markets };
+  }
+
+  let payload;
+  let markets;
+  try {
+    ({ payload, markets } = await fetchFromApi());
+    if (!markets.length) {
+      console.warn("[markets] API returned zero markets; activating client fallback");
+      ({ payload, markets } = await fetchFromLlamaClientFallback());
+    }
+  } catch (err) {
+    console.warn("[markets] API fetch failed; activating client fallback", err);
+    ({ payload, markets } = await fetchFromLlamaClientFallback());
+  }
 
   const normalized = markets.map((market, idx) => {
     const apr = bestApr(market);

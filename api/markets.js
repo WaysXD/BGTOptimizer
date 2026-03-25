@@ -12,6 +12,7 @@ const OFFICIAL_ENDPOINTS = {
   Arbera: process.env.ARBERA_MARKETS_API_URL || "",
   Kodiak: process.env.KODIAK_MARKETS_API_URL || "",
 };
+const DEBUG = process.env.DEBUG_MARKETS === "1";
 
 let cache = {
   ts: 0,
@@ -69,7 +70,9 @@ function mapLlamaPoolToMarket(pool) {
     contractAddress: pool.pool || null,
     sourceType: "defillama",
     sourceName: "DefiLlama yields API",
-    sourceUpdatedAt: toIsoMaybe(pool.timestamp || pool.predictions?.predictedClass),
+    sourceUpdatedAt: toIsoMaybe(
+      typeof pool.timestamp === "number" ? pool.timestamp * 1000 : (pool.timestamp || pool.predictions?.predictedClass)
+    ),
     chain: BERACHAIN_CHAIN_KEY,
     status,
     confidence: "medium",
@@ -126,6 +129,7 @@ function mapOfficialEntry(protocol, raw) {
 
 async function runOfficialAdapter(protocol, endpoint) {
   if (!endpoint) return { markets: [], warning: `${protocol}: endpoint not configured` };
+  if (DEBUG) console.info(`[markets] ${protocol} official adapter start`, endpoint);
   const json = await fetchJsonWithRetry(endpoint, 1);
   const rows = Array.isArray(json)
     ? json
@@ -135,7 +139,13 @@ async function runOfficialAdapter(protocol, endpoint) {
         ? json.markets
         : [];
   const markets = rows.map((entry) => mapOfficialEntry(protocol, entry)).filter((m) => m.status !== "inactive");
+  if (DEBUG) console.info(`[markets] ${protocol} official adapter done`, { rows: rows.length, markets: markets.length });
   return { markets, warning: null };
+}
+
+function isTargetProtocol(rawProject = "") {
+  const project = String(rawProject || "").toLowerCase();
+  return project.includes("beradrome") || project.includes("arbera") || project.includes("kodiak");
 }
 
 function dedupeMarkets(markets) {
@@ -178,25 +188,28 @@ module.exports = async function handler(req, res) {
 
   const warnings = [];
   const official = [];
-
-  for (const [protocol, endpoint] of Object.entries(OFFICIAL_ENDPOINTS)) {
-    try {
-      const { markets, warning } = await runOfficialAdapter(protocol, endpoint);
-      if (warning) warnings.push(warning);
-      official.push(...markets);
-    } catch (err) {
-      warnings.push(`${protocol}: official adapter failed (${err.message})`);
+  const officialResults = await Promise.allSettled(
+    Object.entries(OFFICIAL_ENDPOINTS).map(async ([protocol, endpoint]) => ({ protocol, ...(await runOfficialAdapter(protocol, endpoint)) }))
+  );
+  for (const result of officialResults) {
+    if (result.status === "fulfilled") {
+      if (result.value.warning) warnings.push(result.value.warning);
+      official.push(...result.value.markets);
+      continue;
     }
+    warnings.push(`official adapter failed (${result.reason?.message || "unknown"})`);
   }
 
   let llamaPools = [];
   try {
     const llama = await fetchJsonWithRetry("https://yields.llama.fi/pools", 1);
+    if (DEBUG) console.info("[markets] defillama payload", { total: llama?.data?.length || 0 });
     llamaPools = (llama?.data || [])
       .filter((pool) => String(pool.chain || "").toLowerCase() === BERACHAIN_CHAIN_KEY)
-      .filter((pool) => ["beradrome", "arbera", "kodiak"].includes(String(pool.project || "").toLowerCase()))
+      .filter((pool) => isTargetProtocol(pool.project))
       .map(mapLlamaPoolToMarket)
       .filter((m) => m.status !== "inactive");
+    if (DEBUG) console.info("[markets] defillama mapped", { markets: llamaPools.length });
   } catch (err) {
     warnings.push(`DefiLlama fallback failed (${err.message})`);
   }
@@ -220,6 +233,12 @@ module.exports = async function handler(req, res) {
       activeCount: markets.length,
     },
   };
+  console.info("[markets] response", {
+    official: official.length,
+    defillama: llamaPools.length,
+    merged: markets.length,
+    warnings: warnings.length,
+  });
 
   cache = { ts: Date.now(), payload };
   return res.status(200).json({ ...payload, cache: "miss" });
