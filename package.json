@@ -1,5 +1,5 @@
 {
-  "name": "bgt-optimizer",
+  "name": "risechain-optimizer",
   "version": "1.0.0",
   "scripts": {
     "dev": "vite",

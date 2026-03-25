@@ -1,36 +1,47 @@
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import {
+  APP_NAME,
+  APP_URL,
+  CHAIN_CAIP,
+  CHAIN_ID,
+  CHAIN_NAME,
+  EXPLORER_NAME,
+  EXPLORER_URL,
+  NATIVE_SYMBOL,
+  RPC,
+} from "./constants";
 
 const projectId = "dfda5ea4e566a0b2e34aea47639275ba";
 
-export const berachain = {
-  id: 80094,
-  caipNetworkId: "eip155:80094",
+export const targetChain = {
+  id: CHAIN_ID,
+  caipNetworkId: CHAIN_CAIP,
   chainNamespace: "eip155",
-  name: "Berachain",
-  nativeCurrency: { name: "BERA", symbol: "BERA", decimals: 18 },
+  name: CHAIN_NAME,
+  nativeCurrency: { name: NATIVE_SYMBOL, symbol: NATIVE_SYMBOL, decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://rpc.berachain.com"] },
-    public:  { http: ["https://rpc.berachain.com"] },
+    default: { http: [RPC] },
+    public:  { http: [RPC] },
   },
   blockExplorers: {
-    default: { name: "Berascan", url: "https://berascan.com" },
+    default: { name: EXPLORER_NAME, url: EXPLORER_URL },
   },
 };
 
-const networks = [berachain];
+const networks = [targetChain];
 
 export const wagmiAdapter = new WagmiAdapter({ networks, projectId });
 
 createAppKit({
   adapters: [wagmiAdapter],
   networks,
-  defaultNetwork: berachain,
+  defaultNetwork: targetChain,
   projectId,
   metadata: {
-    name: "BGT Yield Optimizer",
-    description: "Live BGT reward vault rankings for Berachain Proof-of-Liquidity",
-    url: "https://bgtoptimizer.vercel.app",
+    name: APP_NAME,
+    description: `Live reward vault rankings for ${CHAIN_NAME}`,
+    url: APP_URL,
     icons: ["/favicon.svg"],
   },
   features: {

@@ -103,7 +103,7 @@ export default function VaultTable({ initialVaults, beraPrice, source }) {
               <TH l="Type"      k="type"     />
               <TH l="APR"       k="apr"      />
               <TH l="TVL"       k="tvl"      />
-              <TH l="BGT / day" k="bgtPerDay"/>
+              <TH l="RISE / day" k="bgtPerDay"/>
               <TH l="Action"    k={null}     />
             </tr>
           </thead>

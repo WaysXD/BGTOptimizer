@@ -1,4 +1,4 @@
-// Vercel serverless function — proxies JSON-RPC to Berachain (avoids browser CORS).
+// Vercel serverless function — proxies JSON-RPC to RiseChain (avoids browser CORS).
 // Handles both single requests and batch arrays.
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -9,7 +9,8 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const response = await fetch("https://rpc.berachain.com", {
+    const rpcUrl = process.env.RISECHAIN_RPC_URL || "https://rpc.risechain.com";
+    const response = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req.body),
