@@ -15,7 +15,7 @@ input[type=number] {
 }
 input[type=text]:focus,
 input[type=number]:focus { border-color: #f5a62377; }
-input[type=number] { font-family: var(--font-mono), 'Fira Code', monospace; }
+input[type=number] { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 
 input[type=checkbox] { accent-color: #f5a623; cursor: pointer; }
 

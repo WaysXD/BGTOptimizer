@@ -1,7 +1,6 @@
-"use client";
 import { useState, useMemo } from "react";
-import { C } from "@/lib/constants";
-import { fmt, aprPill } from "@/lib/utils";
+import { C } from "../lib/constants";
+import { fmt, aprPill } from "../lib/utils";
 
 export default function Calculator({ vaults, beraPrice }) {
   const [amt, setAmt] = useState(1000);
@@ -36,15 +35,12 @@ export default function Calculator({ vaults, beraPrice }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(190px,1fr))", gap: 10 }}>
         {top5.map((v) => {
-          const yUsd  = amt * (v.apr / 100);
-          const yBgt  = beraPrice ? yUsd / beraPrice : null;
-          const dBgt  = yBgt ? yBgt / 365 : null;
-          const p     = aprPill(v.apr ?? 0);
+          const yUsd = amt * (v.apr / 100);
+          const yBgt = beraPrice ? yUsd / beraPrice : null;
+          const dBgt = yBgt ? yBgt / 365 : null;
+          const p    = aprPill(v.apr ?? 0);
           return (
-            <div
-              key={v.id}
-              style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 12, padding: "1rem", transition: "border-color .2s" }}
-            >
+            <div key={v.id} style={{ background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 12, padding: "1rem" }}>
               <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 2 }}>{v.protocol}</div>
               <div style={{ fontSize: 11, color: C.text2, marginBottom: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.name}</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>

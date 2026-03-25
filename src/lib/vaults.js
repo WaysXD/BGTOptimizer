@@ -1,8 +1,8 @@
-// Server-side vault loading — batched RPC + DeFiLlama LP pricing.
-import { batchRpc } from "./rpc.js";
-import { fetchPrices, fetchBeraPrice } from "./prices.js";
-import { enc, dU, dAddr, dStr } from "./decode.js";
-import { FACTORY, WBERA, SPY, SEL, STABLES, PROTO } from "./constants.js";
+// Client-side vault loading — batched RPC via proxy + DeFiLlama LP pricing.
+import { batchRpc } from "./rpc";
+import { fetchPrices, fetchBeraPrice } from "./prices";
+import { enc, dU, dAddr, dStr } from "./decode";
+import { FACTORY, WBERA, SPY, SEL, STABLES, PROTO } from "./constants";
 
 function guessProt(name = "", symbol = "") {
   const q = (name + symbol).toLowerCase();
@@ -14,31 +14,28 @@ function guessProt(name = "", symbol = "") {
 
 function guessType(name = "", symbol = "", protocol = "") {
   const q = (name + symbol + protocol).toLowerCase();
-  if (q.includes("berps") || q.includes("perp")) return "Perps";
+  if (q.includes("berps") || q.includes("perp"))                               return "Perps";
   if (q.includes("ibera") || q.includes("liquid staked") || q.includes("lst")) return "LST";
-  if (q.includes("lend") || q.includes("bend") || q.includes("supply") || q.includes("collateral")) return "Lending";
-  if (q.includes("smilee") || q.includes("option")) return "Options";
-  if (q.includes("rwa") || q.includes("nav")) return "RWA";
-  if (q.includes("yeet") || q.includes("meme")) return "Meme";
-  if (q.includes("beradrome")) return "ve-AMM";
-  if (q.includes("kodiak")) return "CL-AMM";
+  if (q.includes("lend") || q.includes("bend") || q.includes("supply"))        return "Lending";
+  if (q.includes("smilee") || q.includes("option"))                            return "Options";
+  if (q.includes("rwa") || q.includes("nav"))                                  return "RWA";
+  if (q.includes("yeet") || q.includes("meme"))                                return "Meme";
+  if (q.includes("beradrome"))                                                  return "ve-AMM";
+  if (q.includes("kodiak"))                                                     return "CL-AMM";
   return "AMM";
 }
 
 export async function loadVaults() {
   // 1. Vault count
   const [lenHex] = await batchRpc([{ to: FACTORY, data: SEL.allVaultsLength }]);
-  const count = lenHex ? Number(dU(lenHex)) : 0;
+  const count    = lenHex ? Number(dU(lenHex)) : 0;
   if (!count) throw new Error("no vaults returned from factory");
 
   const MAX = Math.min(count, 80);
 
   // 2. All vault addresses (batched)
   const addrResults = await batchRpc(
-    Array.from({ length: MAX }, (_, i) => ({
-      to: FACTORY,
-      data: SEL.allVaults + enc(i),
-    }))
+    Array.from({ length: MAX }, (_, i) => ({ to: FACTORY, data: SEL.allVaults + enc(i) }))
   );
   const vaultAddrs = addrResults.map((r) => (r ? dAddr(r) : null)).filter(Boolean);
 
@@ -84,7 +81,7 @@ export async function loadVaults() {
     ])
   );
 
-  // 5. Price all staking tokens via DeFiLlama (handles LP tokens too)
+  // 5. Price all staking tokens via DeFiLlama
   const [prices, beraPrice] = await Promise.all([
     fetchPrices(uniqueTokens),
     fetchBeraPrice(),
@@ -99,13 +96,13 @@ export async function loadVaults() {
 
     let tokenPrice = prices[v.stakingToken?.toLowerCase()];
     if (tokenPrice == null) {
-      if (STABLES.has(v.stakingToken?.toLowerCase()))                          tokenPrice = 1.0;
+      if (STABLES.has(v.stakingToken?.toLowerCase()))                       tokenPrice = 1.0;
       else if (v.stakingToken?.toLowerCase() === WBERA.toLowerCase()) tokenPrice = bp;
     }
 
-    const tvl    = tokenPrice != null ? v.totalSupply * tokenPrice : null;
-    const bpy    = v.rewardRate * SPY;
-    const apr    = tvl && tvl > 100 ? (bpy * bp / tvl) * 100 : null;
+    const tvl       = tokenPrice != null ? v.totalSupply * tokenPrice : null;
+    const bpy       = v.rewardRate * SPY;
+    const apr       = tvl && tvl > 100 ? (bpy * bp / tvl) * 100 : null;
     const bgtPerDay = v.rewardRate * 86400;
 
     return {

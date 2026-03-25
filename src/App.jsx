@@ -1,53 +1,52 @@
-import { unstable_cache } from "next/cache";
-import { loadVaults } from "@/lib/vaults";
-import { MOCK, C } from "@/lib/constants";
-import { fmt, aprPill, stakeUrl } from "@/lib/utils";
-import VaultTable from "@/components/VaultTable";
-import WalletPanel from "@/components/WalletPanel";
-import Calculator from "@/components/Calculator";
+import { useState, useEffect } from "react";
+import { C, MOCK } from "./lib/constants";
+import { fmt, aprPill, stakeUrl } from "./lib/utils";
+import { loadVaults } from "./lib/vaults";
+import VaultTable from "./components/VaultTable";
+import WalletPanel from "./components/WalletPanel";
+import Calculator from "./components/Calculator";
+import "./App.css";
 
-const getCachedVaults = unstable_cache(loadVaults, ["vaults"], { revalidate: 60 });
+export default function App() {
+  const [vaults, setVaults]       = useState(MOCK);
+  const [beraPrice, setBeraPrice] = useState(null);
+  const [source, setSource]       = useState("loading");
 
-export const dynamic = "force-dynamic"; // always fresh on edge; swap to "force-static" + revalidate for ISR
-
-export default async function Home() {
-  let vaults = MOCK;
-  let beraPrice = null;
-  let source = "mock";
-
-  try {
-    const data = await getCachedVaults();
-    vaults    = data.vaults;
-    beraPrice = data.beraPrice;
-    source    = "live";
-  } catch { /* fall through to mock */ }
+  useEffect(() => {
+    loadVaults()
+      .then(({ vaults, beraPrice }) => {
+        setVaults(vaults);
+        setBeraPrice(beraPrice);
+        setSource("live");
+      })
+      .catch(() => setSource("mock"));
+  }, []);
 
   // Stats (active vaults only)
-  const active  = vaults.filter((v) => v.active !== false);
-  const aprs    = active.map((v) => v.apr).filter((n) => n != null && n > 0);
-  const tvls    = active.map((v) => v.tvl).filter((n) => n != null && n > 0);
-  const topApr  = aprs.length ? Math.max(...aprs) : null;
-  const avgApr  = aprs.length ? aprs.reduce((a, b) => a + b, 0) / aprs.length : null;
-  const totalTvl = tvls.length ? tvls.reduce((a, b) => a + b, 0) : null;
+  const active      = vaults.filter((v) => v.active !== false);
+  const aprs        = active.map((v) => v.apr).filter((n) => n != null && n > 0);
+  const tvls        = active.map((v) => v.tvl).filter((n) => n != null && n > 0);
+  const topApr      = aprs.length ? Math.max(...aprs) : null;
+  const avgApr      = aprs.length ? aprs.reduce((a, b) => a + b, 0) / aprs.length : null;
+  const totalTvl    = tvls.length ? tvls.reduce((a, b) => a + b, 0) : null;
   const pricedCount = active.filter((v) => v.tvl != null).length;
 
-  // Top 3 by APR
   const top3 = [...vaults]
     .filter((v) => v.active !== false && v.apr != null && v.apr > 0)
     .sort((a, b) => b.apr - a.apr)
     .slice(0, 3);
 
   const statsCards = [
-    { label: "Active vaults",  value: source === "loading" ? "…" : active.length, sub: "accepting deposits" },
-    { label: "Top APR",        value: topApr  != null ? fmt(topApr, 0)  + "%" : "…", sub: "highest single vault", hi: true },
-    { label: "Average APR",    value: avgApr  != null ? fmt(avgApr, 0)  + "%" : "…", sub: "across active vaults" },
-    { label: "Trackable TVL",  value: totalTvl != null ? "$" + fmt(totalTvl) : "…", sub: `${pricedCount} priced vaults` },
+    { label: "Active vaults", value: source === "loading" ? "…" : active.length, sub: "accepting deposits" },
+    { label: "Top APR",       value: topApr != null ? fmt(topApr, 0) + "%" : "…",  sub: "highest single vault", hi: true },
+    { label: "Average APR",   value: avgApr != null ? fmt(avgApr, 0) + "%" : "…",  sub: "across active vaults" },
+    { label: "Trackable TVL", value: totalTvl != null ? "$" + fmt(totalTvl) : "…", sub: `${pricedCount} priced vaults` },
   ];
 
   return (
     <main style={{ background: C.bg0, minHeight: "100vh", fontFamily: C.sans, color: C.text0, padding: "1.5rem" }}>
 
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.75rem" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
@@ -67,7 +66,7 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* ── Stats cards ───────────────────────────────────────────── */}
+      {/* ── Stats cards ─────────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 12, marginBottom: "1.75rem" }}>
         {statsCards.map((s) => (
           <div key={s.label} className="hov-card" style={{ background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 12, padding: "1rem 1.2rem" }}>
@@ -78,7 +77,7 @@ export default async function Home() {
         ))}
       </div>
 
-      {/* ── Top 3 opportunities ───────────────────────────────────── */}
+      {/* ── Top 3 opportunities ─────────────────────────────────────── */}
       {top3.length > 0 && (
         <div style={{ marginBottom: "1.75rem" }}>
           <div style={{ fontSize: 10, color: C.text2, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>Top opportunities</div>
@@ -107,16 +106,16 @@ export default async function Home() {
         </div>
       )}
 
-      {/* ── Wallet panel (client) ─────────────────────────────────── */}
+      {/* ── Wallet panel ────────────────────────────────────────────── */}
       <WalletPanel vaults={vaults} beraPrice={beraPrice} />
 
-      {/* ── Vault table (client) ──────────────────────────────────── */}
+      {/* ── Vault table ─────────────────────────────────────────────── */}
       <VaultTable initialVaults={vaults} beraPrice={beraPrice} source={source} />
 
-      {/* ── Calculator (client) ───────────────────────────────────── */}
+      {/* ── Calculator ──────────────────────────────────────────────── */}
       <Calculator vaults={vaults} beraPrice={beraPrice} />
 
-      {/* ── Footer ───────────────────────────────────────────────── */}
+      {/* ── Footer ──────────────────────────────────────────────────── */}
       <div style={{ fontSize: 11, color: C.text2, lineHeight: 1.7 }}>
         <code style={{ fontFamily: C.mono, background: C.bg2, padding: "1px 6px", borderRadius: 4, fontSize: 10 }}>
           APR = rewardRate × 31536000 × BGTPrice / TVL

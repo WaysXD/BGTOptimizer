@@ -1,7 +1,6 @@
-// Server-side only — called from API routes and server components.
-import { RPC } from "./constants.js";
-
-const CHUNK = 80; // max calls per JSON-RPC batch
+// Client-side RPC — proxies through /api/rpc to avoid browser CORS.
+const API_RPC = "/api/rpc";
+const CHUNK   = 80;
 
 async function batchChunk(calls) {
   const payload = calls.map((c, i) => ({
@@ -10,21 +9,19 @@ async function batchChunk(calls) {
     method: "eth_call",
     params: [{ to: c.to, data: c.data }, "latest"],
   }));
-  const res = await fetch(RPC, {
-    method: "POST",
+  const res = await fetch(API_RPC, {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    cache: "no-store",
+    body:    JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`RPC HTTP ${res.status}`);
   const data = await res.json();
-  const arr = Array.isArray(data) ? data : [data];
+  const arr  = Array.isArray(data) ? data : [data];
   return arr.sort((a, b) => a.id - b.id).map((r) => r.result ?? null);
 }
 
 export async function batchRpc(calls) {
   if (!calls.length) return [];
-  // Split into chunks and run in parallel
   const chunks = [];
   for (let i = 0; i < calls.length; i += CHUNK) {
     chunks.push(calls.slice(i, i + CHUNK));

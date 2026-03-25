@@ -1,8 +1,7 @@
-"use client";
+import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { wagmiConfig } from "@/lib/wagmi"; // also runs createAppKit as a side-effect
-import { useState } from "react";
+import { wagmiConfig } from "./lib/wagmi"; // also runs createAppKit as a side-effect
 
 export function Providers({ children }) {
   const [qc] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1 } } }));

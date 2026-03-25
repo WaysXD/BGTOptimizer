@@ -1,10 +1,8 @@
-"use client";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 
 const projectId = "dfda5ea4e566a0b2e34aea47639275ba";
 
-// Berachain mainnet (not yet in Reown's built-in list)
 export const berachain = {
   id: 80094,
   caipNetworkId: "eip155:80094",
@@ -22,11 +20,7 @@ export const berachain = {
 
 const networks = [berachain];
 
-export const wagmiAdapter = new WagmiAdapter({
-  networks,
-  projectId,
-  ssr: true,
-});
+export const wagmiAdapter = new WagmiAdapter({ networks, projectId });
 
 createAppKit({
   adapters: [wagmiAdapter],
@@ -41,16 +35,16 @@ createAppKit({
   },
   features: {
     analytics: false,
-    email: false,
-    socials: false,
-    onramp: false,
-    swaps: false,
+    email:     false,
+    socials:   false,
+    onramp:    false,
+    swaps:     false,
   },
   themeMode: "dark",
   themeVariables: {
     "--w3m-accent":               "#f5a623",
     "--w3m-border-radius-master": "4px",
-    "--w3m-font-family":          "var(--font-inter), system-ui, sans-serif",
+    "--w3m-font-family":          "Inter, system-ui, sans-serif",
     "--w3m-color-bg-100":         "#0f1117",
     "--w3m-color-bg-125":         "#151820",
     "--w3m-color-bg-150":         "#1c2030",
