@@ -1,0 +1,8 @@
+{
+  "name": "@aetherfall/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'compile with forge or hardhat in phase 1.1'"
+  }
+}

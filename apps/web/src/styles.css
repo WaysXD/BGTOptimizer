@@ -1,0 +1,4 @@
+body { margin: 0; background: #0b1411; color: #e8e7dc; font-family: Inter, sans-serif; }
+.layout { display: grid; grid-template-columns: 1fr 320px; gap: 12px; padding: 12px; }
+.game { border: 1px solid #335c4a; image-rendering: pixelated; }
+.panel { background: #13231d; border: 1px solid #335c4a; padding: 8px; margin-bottom: 8px; }
