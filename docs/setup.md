@@ -20,3 +20,9 @@
 
 ## Seed content
 - `npm run seed`
+
+
+## Vercel
+- Deploy `apps/web` on Vercel (set project root to `apps/web`).
+- Deploy `apps/server` to a stateful host (not Vercel serverless) for Socket.IO MMO runtime.
+- See `docs/vercel-deployment.md` for architecture details.

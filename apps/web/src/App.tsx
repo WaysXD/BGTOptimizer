@@ -7,7 +7,8 @@ export function App() {
   const [players, setPlayers] = useState<Record<string, Entity>>({});
   const [me, setMe] = useState<string>('');
   const [messages, setMessages] = useState<string[]>([]);
-  const socket = useMemo(() => io('http://localhost:4000'), []);
+  const serverUrl = import.meta.env.VITE_GAME_SERVER_URL ?? 'http://localhost:4000';
+  const socket = useMemo(() => io(serverUrl), [serverUrl]);
   const viewRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
