@@ -1,0 +1,46 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  passwordHash String
+  createdAt  DateTime @default(now())
+  characters Character[]
+  wallets    Wallet[]
+  sessions   SessionLog[]
+}
+
+model Character {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String   @unique
+  appearance String
+  zone       String
+  x          Int
+  y          Int
+  level      Int      @default(1)
+  xp         Int      @default(0)
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model ItemDef { id String @id key String @unique name String rarity String slot String? }
+model InventorySlot { id String @id @default(cuid()) characterId String itemKey String? qty Int @default(0) slot Int }
+model BankSlot { id String @id @default(cuid()) characterId String itemKey String? qty Int @default(0) slot Int }
+model CharacterStat { id String @id @default(cuid()) characterId String key String value Int }
+model CharacterSkill { id String @id @default(cuid()) characterId String skill String level Int @default(1) xp Int @default(0) }
+model Npc { id String @id key String @unique name String zone String x Int y Int role String }
+model Enemy { id String @id key String @unique name String zone String level Int hp Int attack Int defense Int }
+model DropTable { id String @id @default(cuid()) enemyKey String itemKey String chance Float minQty Int maxQty Int }
+model Quest { id String @id key String @unique name String arc String minLevel Int @default(1) repeatable Boolean @default(false) rewardXp Int rewardCrowns Int rewardShards Int @default(0) }
+model QuestProgress { id String @id @default(cuid()) characterId String questKey String state String data Json }
+model AuctionListing { id String @id @default(cuid()) sellerCharacterId String itemKey String qty Int unitPrice Int status String createdAt DateTime @default(now()) }
+model TradeLog { id String @id @default(cuid()) initiatorId String receiverId String detail Json createdAt DateTime @default(now()) }
+model Wallet { id String @id @default(cuid()) userId String address String @unique chainId Int verified Boolean @default(false) createdAt DateTime @default(now()) }
+model OffchainBalance { id String @id @default(cuid()) characterId String crowns BigInt @default(0) shardCredits BigInt @default(0) claimableEmber BigInt @default(0) }
+model EconomyLedger { id String @id @default(cuid()) characterId String entryType String amount BigInt meta Json createdAt DateTime @default(now()) }
+model ClaimHistory { id String @id @default(cuid()) userId String wallet String amount BigInt nonce String @unique status String txHash String? createdAt DateTime @default(now()) }
+model SuspiciousActivity { id String @id @default(cuid()) userId String? characterId String? signal String severity Int payload Json createdAt DateTime @default(now()) }
+model SessionLog { id String @id @default(cuid()) userId String ipHash String userAgent String createdAt DateTime @default(now()) }
+model TelemetryEvent { id String @id @default(cuid()) characterId String? event String data Json createdAt DateTime @default(now()) }
