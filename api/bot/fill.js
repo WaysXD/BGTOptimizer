@@ -1,4 +1,4 @@
-const { createWalletClient, createPublicClient, http, parseGwei } = require("viem");
+const { createWalletClient, createPublicClient, http } = require("viem");
 const { privateKeyToAccount } = require("viem/accounts");
 
 const berachain = {
@@ -36,14 +36,16 @@ module.exports = async function handler(req, res) {
       value: BigInt(tx.value || "0"),
     });
 
+    const fees = await publicClient.estimateFeesPerGas();
+
     const hash = await walletClient.sendTransaction({
       account,
       to: tx.to,
       data: tx.data,
       value: BigInt(tx.value || "0"),
       gas: tx.gasLimit ? BigInt(tx.gasLimit) : undefined,
-      maxFeePerGas: parseGwei("5"),
-      maxPriorityFeePerGas: parseGwei("1"),
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
     });
 
     return res.status(200).json({ hash });

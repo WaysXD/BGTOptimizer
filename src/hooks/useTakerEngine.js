@@ -4,6 +4,7 @@ import { PAIR_CONFIGS } from "../lib/config/pairs";
 import { pollPairOrders } from "../lib/engine/poller";
 import { evaluateOpportunity } from "../lib/engine/profitability";
 import { canExecute, createRiskState } from "../lib/engine/risk";
+import { estimateGasCostUsd } from "../lib/engine/gas";
 import { executeOpportunity } from "../lib/engine/executor";
 import { loadPersistedState, savePersistedState } from "../lib/engine/persistence";
 
@@ -39,8 +40,9 @@ export function useTakerEngine() {
         const opportunities = [];
         const rejected = [];
 
+        const gasUsdEstimate = await estimateGasCostUsd({});
         for (const order of polled.orders) {
-          const metrics = evaluateOpportunity({ order, pair });
+          const metrics = evaluateOpportunity({ order, pair, gasUsdEstimate });
           const riskDecision = canExecute({ riskState: state.risk, pair, now, estimatedProfitUsd: metrics.estimatedProfitUsd });
           const candidate = { id: `${order.id}-${polled.finishedAt}`, pairId: pair.id, order, metrics, scannedAt: polled.finishedAt };
           if (metrics.executable && riskDecision.ok) {
