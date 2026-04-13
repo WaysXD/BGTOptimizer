@@ -1,0 +1,148 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { botEnv } from "../lib/config/env";
+import { PAIR_CONFIGS } from "../lib/config/pairs";
+import { pollPairOrders } from "../lib/engine/poller";
+import { evaluateOpportunity } from "../lib/engine/profitability";
+import { canExecute, createRiskState } from "../lib/engine/risk";
+import { estimateGasCostUsd } from "../lib/engine/gas";
+import { executeOpportunity } from "../lib/engine/executor";
+import { loadPersistedState, savePersistedState } from "../lib/engine/persistence";
+import { getTokenPricesUsd } from "../lib/engine/pricing";
+import { applyFillToPnl, applyHedgeToPnl, createPnlState } from "../lib/engine/pnl";
+
+export function useTakerEngine() {
+  const initial = normalizeState(loadPersistedState());
+  const [state, setState] = useState(initial);
+
+  const pairLocks = useRef({});
+  const mode = botEnv.botMode;
+
+  useEffect(() => savePersistedState(state), [state]);
+
+  useEffect(() => {
+    if (!state.running) return;
+
+    const timers = PAIR_CONFIGS.map((pair) => setInterval(async () => {
+      if (pairLocks.current[pair.id]) return;
+      pairLocks.current[pair.id] = true;
+      try {
+        const polled = await pollPairOrders(pair);
+        const now = Date.now();
+        const nextLogs = [];
+        const opportunities = [];
+        const rejected = [];
+
+        const pricesUsd = await getTokenPricesUsd([pair.makerAsset, pair.takerAsset]);
+        const gasUsdEstimate = await estimateGasCostUsd({});
+
+        for (const order of polled.orders) {
+          const metrics = evaluateOpportunity({ order, pair, gasUsdEstimate, pricesUsd });
+          const riskDecision = canExecute({ riskState: state.risk, pair, now, estimatedProfitUsd: metrics.estimatedProfitUsd });
+          const candidate = { id: `${order.id}-${polled.finishedAt}`, pairId: pair.id, pair, order, metrics, scannedAt: polled.finishedAt };
+          if (metrics.executable && riskDecision.ok) {
+            opportunities.push(candidate);
+          } else {
+            rejected.push({ ...candidate, reason: !metrics.executable ? metrics.reason : riskDecision.reason });
+          }
+        }
+
+        if (opportunities.length > 0) {
+          const best = opportunities.sort((a, b) => b.metrics.estimatedProfitUsd - a.metrics.estimatedProfitUsd)[0];
+          const fill = await executeOpportunity({ mode, opportunity: best, pair, takerAddress: orderToAddress(best.order) });
+          const fillRecord = { ...best, fill, executedAt: Date.now() };
+
+          setState((prev) => {
+            let pnl = applyFillToPnl({ pnl: prev.pnl, fillRecord, pricesUsd: { ...prev.pricesUsd, ...pricesUsd } });
+            pnl = applyHedgeToPnl({ pnl, hedgeRecord: fill.hedge || {} });
+
+            return {
+              ...prev,
+              pnl,
+              pricesUsd: { ...prev.pricesUsd, ...pricesUsd },
+              heartbeatAt: now,
+              lastPollByPair: { ...prev.lastPollByPair, [pair.id]: polled.finishedAt },
+              opportunities: [best, ...prev.opportunities].slice(0, 300),
+              rejected: [...rejected, ...prev.rejected].slice(0, 300),
+              fills: [fillRecord, ...prev.fills].slice(0, 300),
+              logs: [{ level: "info", message: `Fill ${fill.status} for ${pair.id}`, at: now }, ...prev.logs].slice(0, 500),
+            };
+          });
+        } else {
+          nextLogs.push({ level: "debug", message: `No executable orders for ${pair.id}`, at: now });
+          setState((prev) => ({
+            ...prev,
+            pricesUsd: { ...prev.pricesUsd, ...pricesUsd },
+            heartbeatAt: now,
+            lastPollByPair: { ...prev.lastPollByPair, [pair.id]: polled.finishedAt },
+            opportunities: [...opportunities, ...prev.opportunities].slice(0, 300),
+            rejected: [...rejected, ...prev.rejected].slice(0, 300),
+            logs: [...nextLogs, ...prev.logs].slice(0, 500),
+          }));
+        }
+      } catch (error) {
+        setState((prev) => ({ ...prev, logs: [{ level: "error", message: error.message, at: Date.now() }, ...prev.logs].slice(0, 500) }));
+      } finally {
+        pairLocks.current[pair.id] = false;
+      }
+    }, pair.pollIntervalMs));
+
+    return () => timers.forEach(clearInterval);
+  }, [mode, state.running, state.risk]);
+
+  const overview = useMemo(() => ({
+    uptimeMs: Date.now() - state.startedAt,
+    opportunities: state.opportunities.length,
+    rejected: state.rejected.length,
+    fills: state.fills.length,
+    mode,
+    heartbeatAt: state.heartbeatAt,
+    enabledPairs: PAIR_CONFIGS.filter((p) => p.enabled).length,
+    realizedUsd: state.pnl.realizedUsd,
+    unrealizedUsd: state.pnl.unrealizedUsd,
+  }), [state, mode]);
+
+  return {
+    state,
+    overview,
+    pairs: PAIR_CONFIGS,
+    setRunning: (running) => setState((prev) => ({ ...prev, running })),
+    setGlobalPause: (pause) => setState((prev) => ({ ...prev, risk: { ...prev.risk, globalPause: pause } })),
+    emergencyStop: () => setState((prev) => ({ ...prev, risk: { ...prev.risk, emergencyStop: true }, running: false })),
+    clearLogs: () => setState((prev) => ({ ...prev, logs: [] })),
+  };
+}
+
+
+function normalizeState(raw) {
+  const base = {
+    startedAt: Date.now(),
+    heartbeatAt: null,
+    lastPollByPair: {},
+    opportunities: [],
+    rejected: [],
+    fills: [],
+    logs: [],
+    pricesUsd: {},
+    pnl: createPnlState(),
+    risk: createRiskState(),
+    running: true,
+  };
+
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    ...base,
+    ...raw,
+    lastPollByPair: { ...base.lastPollByPair, ...(raw.lastPollByPair || {}) },
+    pricesUsd: { ...base.pricesUsd, ...(raw.pricesUsd || {}) },
+    pnl: { ...base.pnl, ...(raw.pnl || {}), inventory: { ...base.pnl.inventory, ...(raw.pnl?.inventory || {}) }, history: Array.isArray(raw.pnl?.history) ? raw.pnl.history : [] },
+    risk: { ...base.risk, ...(raw.risk || {}) },
+    opportunities: Array.isArray(raw.opportunities) ? raw.opportunities : [],
+    rejected: Array.isArray(raw.rejected) ? raw.rejected : [],
+    fills: Array.isArray(raw.fills) ? raw.fills : [],
+    logs: Array.isArray(raw.logs) ? raw.logs : [],
+  };
+}
+
+function orderToAddress(order) {
+  return typeof order?.taker === "string" && order.taker.startsWith("0x") ? order.taker : (order?.maker || "0x0000000000000000000000000000000000000000");
+}
