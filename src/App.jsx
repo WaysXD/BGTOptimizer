@@ -47,8 +47,8 @@ export default function App() {
         <MetricCard label="Opportunities" value={overview.opportunities} />
         <MetricCard label="Fills" value={overview.fills} />
         <MetricCard label="Pairs enabled" value={overview.enabledPairs} />
-        <MetricCard label="Realized PnL" value={`$${overview.realizedUsd.toFixed(2)}`} />
-        <MetricCard label="Unrealized PnL" value={`$${overview.unrealizedUsd.toFixed(2)}`} />
+        <MetricCard label="Realized PnL" value={`$${Number(overview.realizedUsd || 0).toFixed(2)}`} />
+        <MetricCard label="Unrealized PnL" value={`$${Number(overview.unrealizedUsd || 0).toFixed(2)}`} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>

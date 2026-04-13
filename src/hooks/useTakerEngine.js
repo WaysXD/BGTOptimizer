@@ -11,20 +11,8 @@ import { getTokenPricesUsd } from "../lib/engine/pricing";
 import { applyFillToPnl, applyHedgeToPnl, createPnlState } from "../lib/engine/pnl";
 
 export function useTakerEngine() {
-  const initial = loadPersistedState();
-  const [state, setState] = useState(initial || {
-    startedAt: Date.now(),
-    heartbeatAt: null,
-    lastPollByPair: {},
-    opportunities: [],
-    rejected: [],
-    fills: [],
-    logs: [],
-    pricesUsd: {},
-    pnl: createPnlState(),
-    risk: createRiskState(),
-    running: true,
-  });
+  const initial = normalizeState(loadPersistedState());
+  const [state, setState] = useState(initial);
 
   const pairLocks = useRef({});
   const mode = botEnv.botMode;
@@ -121,6 +109,37 @@ export function useTakerEngine() {
     setGlobalPause: (pause) => setState((prev) => ({ ...prev, risk: { ...prev.risk, globalPause: pause } })),
     emergencyStop: () => setState((prev) => ({ ...prev, risk: { ...prev.risk, emergencyStop: true }, running: false })),
     clearLogs: () => setState((prev) => ({ ...prev, logs: [] })),
+  };
+}
+
+
+function normalizeState(raw) {
+  const base = {
+    startedAt: Date.now(),
+    heartbeatAt: null,
+    lastPollByPair: {},
+    opportunities: [],
+    rejected: [],
+    fills: [],
+    logs: [],
+    pricesUsd: {},
+    pnl: createPnlState(),
+    risk: createRiskState(),
+    running: true,
+  };
+
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    ...base,
+    ...raw,
+    lastPollByPair: { ...base.lastPollByPair, ...(raw.lastPollByPair || {}) },
+    pricesUsd: { ...base.pricesUsd, ...(raw.pricesUsd || {}) },
+    pnl: { ...base.pnl, ...(raw.pnl || {}), inventory: { ...base.pnl.inventory, ...(raw.pnl?.inventory || {}) }, history: Array.isArray(raw.pnl?.history) ? raw.pnl.history : [] },
+    risk: { ...base.risk, ...(raw.risk || {}) },
+    opportunities: Array.isArray(raw.opportunities) ? raw.opportunities : [],
+    rejected: Array.isArray(raw.rejected) ? raw.rejected : [],
+    fills: Array.isArray(raw.fills) ? raw.fills : [],
+    logs: Array.isArray(raw.logs) ? raw.logs : [],
   };
 }
 
