@@ -1,2 +1,3 @@
-// Empty stub — porto/internal is never used but gets imported transitively.
-export default {};
+// Stubbed porto internals for connector tree-shaking in build.
+export const z = {};
+export default { z };
