@@ -40,13 +40,15 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6,minmax(0,1fr))", gap: 10, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(8,minmax(0,1fr))", gap: 10, marginBottom: 12 }}>
         <MetricCard label="Bot mode" value={overview.mode} sub={botEnv.hasServerSigner ? "server signer configured" : "server signer missing"} />
         <MetricCard label="Heartbeat" value={overview.heartbeatAt ? new Date(overview.heartbeatAt).toLocaleTimeString() : "never"} />
         <MetricCard label="Uptime" value={`${Math.floor(overview.uptimeMs / 1000)}s`} />
         <MetricCard label="Opportunities" value={overview.opportunities} />
         <MetricCard label="Fills" value={overview.fills} />
         <MetricCard label="Pairs enabled" value={overview.enabledPairs} />
+        <MetricCard label="Realized PnL" value={`$${overview.realizedUsd.toFixed(2)}`} />
+        <MetricCard label="Unrealized PnL" value={`$${overview.unrealizedUsd.toFixed(2)}`} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -60,6 +62,7 @@ export default function App() {
           { key: "pairId", label: "Pair" },
           { key: "edge", label: "Edge bps", render: (r) => r.metrics?.edgeBps ?? "—" },
           { key: "profit", label: "Est. Profit USD", render: (r) => r.metrics?.estimatedProfitUsd?.toFixed?.(3) ?? "—" },
+          { key: "fee", label: "Fees USD", render: (r) => r.metrics?.estimatedFeesUsd?.toFixed?.(3) ?? "0" },
           { key: "orderId", label: "Order", render: (r) => r.order?.id },
           { key: "time", label: "Scanned", render: (r) => new Date(r.scannedAt).toLocaleTimeString() },
         ]} rows={state.opportunities.slice(0, 50)} />

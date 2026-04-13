@@ -3,11 +3,12 @@ import { maybeHedge } from "./hedger";
 
 export async function executeOpportunity({ mode, opportunity, pair, takerAddress }) {
   if (mode !== "live") {
+    const hedge = await maybeHedge({ enabled: pair.hedgeEnabled, fill: opportunity, pair, mode, walletAddress: takerAddress });
     return {
       status: "dry-run",
       txHash: null,
       encoded: null,
-      hedge: { status: "unhedged", reason: "dry-run" },
+      hedge,
     };
   }
 
@@ -36,6 +37,6 @@ export async function executeOpportunity({ mode, opportunity, pair, takerAddress
   const tx = await response.json();
   if (!response.ok) throw new Error(tx.error || "Fill execution failed");
 
-  const hedge = await maybeHedge({ enabled: pair.hedgeEnabled, fill: opportunity.order, pair });
+  const hedge = await maybeHedge({ enabled: pair.hedgeEnabled, fill: opportunity, pair, mode, walletAddress: takerAddress });
   return { status: "submitted", txHash: tx.hash, encoded, hedge };
 }

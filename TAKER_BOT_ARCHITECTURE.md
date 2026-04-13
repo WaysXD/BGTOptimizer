@@ -22,9 +22,15 @@ Single-purpose Berachain (80094) Kyber Limit Order taker dashboard.
 5. Request encoded fill calldata.
 6. Dry-run: record hypothetical fill.
 7. Live mode: send tx via server endpoint `/api/bot/fill`.
-8. Optionally call hedge module.
+8. Execute hedge/rebalance leg via Kyber Aggregator route/build + server fill endpoint when enabled.
 
 ## Security model
 - No private key in browser.
 - Live execution requires server env `BOT_PRIVATE_KEY` and `BOT_MODE=live`.
 - Client mode defaults to dry-run.
+
+
+## PnL and pricing
+- Pricing uses CoinGecko token/asset feeds (with short cache) for taker+maker USD values.
+- Profitability includes estimated protocol fee impact when order fee bps is present.
+- Realized and unrealized PnL are tracked in local persisted engine state.

@@ -7,6 +7,8 @@ import { canExecute, createRiskState } from "../lib/engine/risk";
 import { estimateGasCostUsd } from "../lib/engine/gas";
 import { executeOpportunity } from "../lib/engine/executor";
 import { loadPersistedState, savePersistedState } from "../lib/engine/persistence";
+import { getTokenPricesUsd } from "../lib/engine/pricing";
+import { applyFillToPnl, applyHedgeToPnl, createPnlState } from "../lib/engine/pnl";
 
 export function useTakerEngine() {
   const initial = loadPersistedState();
@@ -18,6 +20,8 @@ export function useTakerEngine() {
     rejected: [],
     fills: [],
     logs: [],
+    pricesUsd: {},
+    pnl: createPnlState(),
     risk: createRiskState(),
     running: true,
   });
@@ -40,11 +44,13 @@ export function useTakerEngine() {
         const opportunities = [];
         const rejected = [];
 
+        const pricesUsd = await getTokenPricesUsd([pair.makerAsset, pair.takerAsset]);
         const gasUsdEstimate = await estimateGasCostUsd({});
+
         for (const order of polled.orders) {
-          const metrics = evaluateOpportunity({ order, pair, gasUsdEstimate });
+          const metrics = evaluateOpportunity({ order, pair, gasUsdEstimate, pricesUsd });
           const riskDecision = canExecute({ riskState: state.risk, pair, now, estimatedProfitUsd: metrics.estimatedProfitUsd });
-          const candidate = { id: `${order.id}-${polled.finishedAt}`, pairId: pair.id, order, metrics, scannedAt: polled.finishedAt };
+          const candidate = { id: `${order.id}-${polled.finishedAt}`, pairId: pair.id, pair, order, metrics, scannedAt: polled.finishedAt };
           if (metrics.executable && riskDecision.ok) {
             opportunities.push(candidate);
           } else {
@@ -56,19 +62,28 @@ export function useTakerEngine() {
           const best = opportunities.sort((a, b) => b.metrics.estimatedProfitUsd - a.metrics.estimatedProfitUsd)[0];
           const fill = await executeOpportunity({ mode, opportunity: best, pair, takerAddress: orderToAddress(best.order) });
           const fillRecord = { ...best, fill, executedAt: Date.now() };
-          setState((prev) => ({
-            ...prev,
-            heartbeatAt: now,
-            lastPollByPair: { ...prev.lastPollByPair, [pair.id]: polled.finishedAt },
-            opportunities: [best, ...prev.opportunities].slice(0, 300),
-            rejected: [...rejected, ...prev.rejected].slice(0, 300),
-            fills: [fillRecord, ...prev.fills].slice(0, 300),
-            logs: [{ level: "info", message: `Fill ${fill.status} for ${pair.id}`, at: now }, ...prev.logs].slice(0, 500),
-          }));
+
+          setState((prev) => {
+            let pnl = applyFillToPnl({ pnl: prev.pnl, fillRecord, pricesUsd: { ...prev.pricesUsd, ...pricesUsd } });
+            pnl = applyHedgeToPnl({ pnl, hedgeRecord: fill.hedge || {} });
+
+            return {
+              ...prev,
+              pnl,
+              pricesUsd: { ...prev.pricesUsd, ...pricesUsd },
+              heartbeatAt: now,
+              lastPollByPair: { ...prev.lastPollByPair, [pair.id]: polled.finishedAt },
+              opportunities: [best, ...prev.opportunities].slice(0, 300),
+              rejected: [...rejected, ...prev.rejected].slice(0, 300),
+              fills: [fillRecord, ...prev.fills].slice(0, 300),
+              logs: [{ level: "info", message: `Fill ${fill.status} for ${pair.id}`, at: now }, ...prev.logs].slice(0, 500),
+            };
+          });
         } else {
           nextLogs.push({ level: "debug", message: `No executable orders for ${pair.id}`, at: now });
           setState((prev) => ({
             ...prev,
+            pricesUsd: { ...prev.pricesUsd, ...pricesUsd },
             heartbeatAt: now,
             lastPollByPair: { ...prev.lastPollByPair, [pair.id]: polled.finishedAt },
             opportunities: [...opportunities, ...prev.opportunities].slice(0, 300),
@@ -94,6 +109,8 @@ export function useTakerEngine() {
     mode,
     heartbeatAt: state.heartbeatAt,
     enabledPairs: PAIR_CONFIGS.filter((p) => p.enabled).length,
+    realizedUsd: state.pnl.realizedUsd,
+    unrealizedUsd: state.pnl.unrealizedUsd,
   }), [state, mode]);
 
   return {

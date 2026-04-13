@@ -1,6 +1,6 @@
 import { formatUnits } from "viem";
 
-export function evaluateOpportunity({ order, pair, gasUsdEstimate = 0.35, hedgeCostUsd = 0 }) {
+export function evaluateOpportunity({ order, pair, gasUsdEstimate = 0.35, hedgeCostUsd = 0, pricesUsd = {}, estimatedFeesUsd }) {
   const makingAmount = BigInt(order.makingAmount || "0");
   const takingAmount = BigInt(order.takingAmount || "0");
   const filledMaking = BigInt(order.filledMakingAmount || "0");
@@ -15,13 +15,23 @@ export function evaluateOpportunity({ order, pair, gasUsdEstimate = 0.35, hedgeC
   }
 
   const remainingTaking = makingAmount === 0n ? 0n : (takingAmount * remainingRatioNum) / makingAmount;
-  const fillRate = remainingTaking === 0n ? 0 : Number(remainingMaking * 10_000n / remainingTaking);
+  const makerUnits = Number(formatUnits(remainingMaking, pair.makerDecimals));
+  const takerUnits = Number(formatUnits(remainingTaking, pair.takerDecimals));
 
-  // Conservative: assume 1:1 nominal USD for dashboard estimate unless external pricing plugged in.
-  const grossUsd = Number(formatUnits(remainingMaking, pair.makerDecimals));
-  const edgeBps = Math.max(fillRate - 10_000, -10_000);
-  const projectedEdgeUsd = (grossUsd * edgeBps) / 10_000;
-  const estimatedProfitUsd = projectedEdgeUsd - gasUsdEstimate - hedgeCostUsd;
+  const makerUsdPx = Number(pricesUsd[pair.makerAsset.toLowerCase()] ?? 0);
+  const takerUsdPx = Number(pricesUsd[pair.takerAsset.toLowerCase()] ?? 0);
+  const makerUsdValue = makerUnits * makerUsdPx;
+  const takerUsdValue = takerUnits * takerUsdPx;
+
+  if (makerUsdValue <= 0 || takerUsdValue <= 0) {
+    return { executable: false, reason: "missing-price-feed", estimatedProfitUsd: 0, edgeBps: 0 };
+  }
+
+  const feeBps = Number(order?.feeConfig?.takingFeeBps || order?.feeBps || 0);
+  const computedFeesUsd = estimatedFeesUsd != null ? estimatedFeesUsd : (takerUsdValue * feeBps) / 10_000;
+
+  const edgeBps = ((makerUsdValue - takerUsdValue) / takerUsdValue) * 10_000;
+  const estimatedProfitUsd = makerUsdValue - takerUsdValue - gasUsdEstimate - hedgeCostUsd - computedFeesUsd;
 
   if (edgeBps < pair.minEdgeBps) return { executable: false, reason: "edge-too-low", estimatedProfitUsd, edgeBps };
   if (estimatedProfitUsd < pair.minProfitUsd) return { executable: false, reason: "profit-too-low", estimatedProfitUsd, edgeBps };
@@ -32,6 +42,11 @@ export function evaluateOpportunity({ order, pair, gasUsdEstimate = 0.35, hedgeC
     reason: "pass",
     edgeBps,
     estimatedProfitUsd,
+    estimatedFeesUsd: computedFeesUsd,
+    makerUsdPx,
+    takerUsdPx,
+    makerUsdValue,
+    takerUsdValue,
     remainingMaking: remainingMaking.toString(),
     remainingTaking: remainingTaking.toString(),
   };
