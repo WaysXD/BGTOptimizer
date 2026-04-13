@@ -11,7 +11,7 @@
 
 ## Optional
 - `KYBER_AGGREGATOR_API_BASE_URL`
-- `DEFAULT_MIN_EDGE_BPS`
+- `DEFAULT_MIN_EDGE_BPS` (default `5`)
 - `DEFAULT_MAX_GAS_USD` (default `0.10`, tuned for Berachain's very low gas regime)
-- `DEFAULT_MIN_PROFIT_USD`
+- `DEFAULT_MIN_PROFIT_USD` (default `0.50`)
 - `HEDGE_ENABLED`

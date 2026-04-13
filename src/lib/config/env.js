@@ -13,9 +13,9 @@ export const botEnv = {
   kyberAggregatorApiBaseUrl: fromEnv("KYBER_AGGREGATOR_API_BASE_URL", "https://aggregator-api.kyberswap.com"),
   kyberClientId: fromEnv("KYBER_CLIENT_ID", "BerachainTakerDashboard"),
   botMode: mode === "live" ? "live" : "dry-run",
-  defaultMinEdgeBps: Number(fromEnv("DEFAULT_MIN_EDGE_BPS", "15")),
+  defaultMinEdgeBps: Number(fromEnv("DEFAULT_MIN_EDGE_BPS", "5")),
   defaultMaxGasUsd: Number(fromEnv("DEFAULT_MAX_GAS_USD", "0.10")),
-  defaultMinProfitUsd: Number(fromEnv("DEFAULT_MIN_PROFIT_USD", "2")),
+  defaultMinProfitUsd: Number(fromEnv("DEFAULT_MIN_PROFIT_USD", "0.50")),
   hedgeEnabled: fromEnv("HEDGE_ENABLED", "false") === "true",
   hasServerSigner: privateKey.startsWith("0x") && privateKey.length === 66,
 };

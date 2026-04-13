@@ -33,9 +33,30 @@ export function evaluateOpportunity({ order, pair, gasUsdEstimate = 0.35, hedgeC
   const edgeBps = ((makerUsdValue - takerUsdValue) / takerUsdValue) * 10_000;
   const estimatedProfitUsd = makerUsdValue - takerUsdValue - gasUsdEstimate - hedgeCostUsd - computedFeesUsd;
 
-  if (edgeBps < pair.minEdgeBps) return { executable: false, reason: "edge-too-low", estimatedProfitUsd, edgeBps };
-  if (estimatedProfitUsd < pair.minProfitUsd) return { executable: false, reason: "profit-too-low", estimatedProfitUsd, edgeBps };
-  if (gasUsdEstimate > pair.maxGasUsd) return { executable: false, reason: "gas-too-high", estimatedProfitUsd, edgeBps };
+  if (edgeBps < pair.minEdgeBps) {
+    return {
+      executable: false,
+      reason: `edge-too-low (${edgeBps.toFixed(2)} < ${pair.minEdgeBps} bps)`,
+      estimatedProfitUsd,
+      edgeBps,
+    };
+  }
+  if (estimatedProfitUsd < pair.minProfitUsd) {
+    return {
+      executable: false,
+      reason: `profit-too-low ($${estimatedProfitUsd.toFixed(2)} < $${pair.minProfitUsd})`,
+      estimatedProfitUsd,
+      edgeBps,
+    };
+  }
+  if (gasUsdEstimate > pair.maxGasUsd) {
+    return {
+      executable: false,
+      reason: `gas-too-high ($${gasUsdEstimate.toFixed(4)} > $${pair.maxGasUsd})`,
+      estimatedProfitUsd,
+      edgeBps,
+    };
+  }
 
   return {
     executable: true,
