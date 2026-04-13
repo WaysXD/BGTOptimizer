@@ -1,4 +1,4 @@
-import { BGT, HONEY, WBERA } from "../constants";
+import { HONEY, WBERA } from "../constants";
 import { validatePairAddress } from "./env";
 
 export const PAIR_CONFIGS = [
@@ -21,26 +21,6 @@ export const PAIR_CONFIGS = [
     inventoryCapWei: 5000n * 10n ** 18n,
     cooldownMs: 45_000,
     pollIntervalMs: 15_000,
-  },
-  {
-    id: "bgt-honey",
-    baseSymbol: "BGT",
-    quoteSymbol: "HONEY",
-    makerAsset: BGT.toLowerCase(),
-    takerAsset: HONEY.toLowerCase(),
-    makerDecimals: 18,
-    takerDecimals: 18,
-    minOrderSizeWei: 10n ** 16n,
-    maxOrderSizeWei: 500n * 10n ** 18n,
-    minEdgeBps: 30,
-    maxSlippageBps: 80,
-    maxGasUsd: 10,
-    minProfitUsd: 3,
-    enabled: true,
-    hedgeEnabled: false,
-    inventoryCapWei: 250n * 10n ** 18n,
-    cooldownMs: 60_000,
-    pollIntervalMs: 20_000,
   },
 ];
 
