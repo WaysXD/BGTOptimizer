@@ -51,6 +51,7 @@ export default function App() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
             <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>🐻 BGT Yield Optimizer</span>
+            <a href="/swap" className="lnk" style={{ fontSize: 12 }}>Swap ↗</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.text2 }}>
             <span>Berachain mainnet · Proof-of-Liquidity vaults</span>
