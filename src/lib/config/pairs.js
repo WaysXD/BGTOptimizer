@@ -1,5 +1,5 @@
 import { HONEY, WBERA } from "../constants";
-import { validatePairAddress } from "./env";
+import { botEnv, validatePairAddress } from "./env";
 
 export const PAIR_CONFIGS = [
   {
@@ -12,10 +12,10 @@ export const PAIR_CONFIGS = [
     takerDecimals: 18,
     minOrderSizeWei: 10n ** 16n,
     maxOrderSizeWei: 2000n * 10n ** 18n,
-    minEdgeBps: 15,
+    minEdgeBps: botEnv.defaultMinEdgeBps,
     maxSlippageBps: 50,
-    maxGasUsd: 8,
-    minProfitUsd: 2,
+    maxGasUsd: botEnv.defaultMaxGasUsd,
+    minProfitUsd: botEnv.defaultMinProfitUsd,
     enabled: true,
     hedgeEnabled: true,
     inventoryCapWei: 5000n * 10n ** 18n,

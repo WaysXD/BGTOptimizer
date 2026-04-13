@@ -14,7 +14,7 @@ export const botEnv = {
   kyberClientId: fromEnv("KYBER_CLIENT_ID", "BerachainTakerDashboard"),
   botMode: mode === "live" ? "live" : "dry-run",
   defaultMinEdgeBps: Number(fromEnv("DEFAULT_MIN_EDGE_BPS", "15")),
-  defaultMaxGasUsd: Number(fromEnv("DEFAULT_MAX_GAS_USD", "8")),
+  defaultMaxGasUsd: Number(fromEnv("DEFAULT_MAX_GAS_USD", "0.10")),
   defaultMinProfitUsd: Number(fromEnv("DEFAULT_MIN_PROFIT_USD", "2")),
   hedgeEnabled: fromEnv("HEDGE_ENABLED", "false") === "true",
   hasServerSigner: privateKey.startsWith("0x") && privateKey.length === 66,
